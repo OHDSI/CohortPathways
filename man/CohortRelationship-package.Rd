@@ -4,7 +4,7 @@
 \name{CohortRelationship-package}
 \alias{CohortRelationship}
 \alias{CohortRelationship-package}
-\title{CohortRelationship: An R package to compute relationships between set of instantiated cohorts using interval algebra.}
+\title{CohortRelationship: An R package to compute temporal relationships between persons in two or more instantiated cohorts.}
 \description{
 An R package with a Shiny viewer to explore profiles of patients in a cohort.
 }
