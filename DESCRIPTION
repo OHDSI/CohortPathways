@@ -1,0 +1,38 @@
+Package: CohortRelationship
+Type: Package
+Title: An R package to compute temporal relationships between persons in two or more instantiated cohorts.
+Version: 0.0.1
+Date: 2022-12-03
+Authors@R: c(
+    person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
+    person("Observational Health Data Science and Informatics", role = c("cph"))
+  )
+Maintainer: Gowtham Rao <rao@ohdsi.org>
+Description: An R package with a Shiny viewer to explore profiles of patients in a cohort.
+Depends:
+	DatabaseConnector (>= 5.0.0),
+	R (>= 4.1.0)
+Imports:
+    checkmate,
+    dplyr,
+    lifecycle,
+    ParallelLogger,
+    SqlRender
+Suggests:
+  Eunomia,
+  remotes,
+  rmarkdown,
+  knitr,
+	testthat,
+	withr
+Remotes:
+  ohdsi/Eunomia,
+  ohdsi/ParallelLogger
+License: Apache License
+RoxygenNote: 7.2.2
+VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)
+Encoding: UTF-8
+Language: en-US
+URL: https://ohdsi.github.io/CohortRelationship/, https://github.com/OHDSI/CohortRelationship
+BugReports: https://github.com/OHDSI/CohortRelationship/issues
