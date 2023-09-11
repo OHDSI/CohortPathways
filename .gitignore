@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.tmp
+.Rprofile
+errorReportSql.txt
+pathwaysAnalysisPathsData.csv
+pathwayAnalysisCodesLong.csv
+pathwayAnalysisCodes.csv
+pathwaysAnalysisPathsData.csv
