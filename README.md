@@ -39,7 +39,7 @@ Installation
 
 User Documentation
 ==================
-Documentation can be found on the [package website](https://ohdsi.github.io/CohortPathways).
+Documentation can be found on the [package website](https://github.com/OHDSI/CohortPathways).
 
 PDF versions of the documentation are also available:
 * Package manual: [CohortPathways.pdf](https://raw.githubusercontent.com/OHDSI/CohortPathways/main/extras/CohortPathways.pdf)

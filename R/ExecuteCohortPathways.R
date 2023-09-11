@@ -21,13 +21,13 @@
 #' Runs the cohort pathways on all instantiated combinations of target and event cohorts.
 #' Assumes the cohorts have already been instantiated.
 #'
-#' @param connectionDetails   An object of type \code{connectionDetails} as created using the
+#' @param connectionDetails   An object of type connectionDetails as created using the
 #'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 #'                            DatabaseConnector package. Can be left NULL if \code{connection} is
 #'                            provided.
 #' @param connection          An object of type \code{connection} as created using the
 #'                            \code{\link[DatabaseConnector]{connect}} function in the
-#'                            DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+#'                            DatabaseConnector package. Can be left NULL if connectionDetails
 #'                            is provided, in which case a new connection will be opened at the start
 #'                            of the function, and closed when the function finishes.
 #' @param cohortDatabaseSchema   Schema name where your cohort tables reside. Note that for SQL Server,
@@ -36,7 +36,7 @@
 #' @param cohortTableName            The name of the cohort table.
 #' @param targetCohortIds     A vector of one or more Cohort Ids corresponding to target cohort (s).
 #' @param eventCohortIds      A vector of one or more Cohort Ids corresponding to event cohort (s).
-#' @param cohortDefinitionSet A data frame object with minimum two columns, cohortId and in 
+#' @param cohortDefinitionSet A data frame object with minimum two columns, cohortId and in
 #'                            targetCohortId and eventCohortId. This is the source of cohort names.
 #' @param targetDatabaseSchema   (Optional) Schema name where output pathway tables would reside. This is also known as
 #'                               as resultsDatabaseSChema. If not specified, scratch schema will be used. The output may not
@@ -51,8 +51,8 @@
 #' @param minCellCount          (Default = 5) The minimum cell count for fields contains person counts or fractions.
 #' @param allowRepeats          (Default = FALSE) Allow cohort events/combos to appear multiple times in the same pathway.
 #' @param maxDepth              (Default = 5) Maximum number of steps in a given pathway to be included in the sunburst plot
-#' @param collapseWindow        (Default = 30) Any dates found within the specified collapse days will 
-#'                              be reassigned the earliest date. Collapsing dates reduces pathway 
+#' @param collapseWindow        (Default = 30) Any dates found within the specified collapse days will
+#'                              be reassigned the earliest date. Collapsing dates reduces pathway
 #'                              variation, leading to a reduction in 'noise' in the result.
 #' @param overwrite             (Default = TRUE) Do you want to overwrite results?
 #'
@@ -81,7 +81,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
                                   connection = NULL,
                                   cohortDatabaseSchema,
                                   cohortTableName = "cohort",
-                                  targetDatabaseSChema = NULL,
+                                  targetDatabaseSchema = NULL,
                                   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                   targetCohortIds,
                                   eventCohortIds,
@@ -101,7 +101,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
     min.len = 1,
     add = errorMessage
   )
-  if (!is.null(targetDatabaseSChema)) {
+  if (!is.null(targetDatabaseSchema)) {
     checkmate::assertCharacter(
       x = cohortDatabaseSchema,
       min.len = 1,
@@ -299,9 +299,9 @@ executeCohortPathways <- function(connectionDetails = NULL,
     intersect(x = targetCohortIds, y = cohortCounts$cohortId)
 
   pathwayAnalysisCodes <- "pa_codes"
-  if (!is.null(targetDatabaseSChema)) {
+  if (!is.null(targetDatabaseSchema)) {
     # pathwayAnalysisCodes <-
-    #   paste0(targetDatabaseSChema, ".", pathwayAnalysisCodeTable)
+    #   paste0(targetDatabaseSchema, ".", pathwayAnalysisCodeTable)
     pathwayAnalysisCodesTableIsTemp <- FALSE
   } else {
     pathwayAnalysisCodes <- paste0("#", pathwayAnalysisCodes)
@@ -309,25 +309,25 @@ executeCohortPathways <- function(connectionDetails = NULL,
   }
 
   pathwayAnalysisEvents <- "pa_events"
-  if (!is.null(targetDatabaseSChema)) {
+  if (!is.null(targetDatabaseSchema)) {
     pathwayAnalysisEvents <-
-      paste0(targetDatabaseSChema, ".", pathwayAnalysisEvents)
+      paste0(targetDatabaseSchema, ".", pathwayAnalysisEvents)
   } else {
     pathwayAnalysisEvents <- paste0("#", pathwayAnalysisEvents)
   }
 
   pathwayAnalysisPaths <- "pa_paths"
-  if (!is.null(targetDatabaseSChema)) {
+  if (!is.null(targetDatabaseSchema)) {
     pathwayAnalysisPaths <-
-      paste0(targetDatabaseSChema, ".", pathwayAnalysisPaths)
+      paste0(targetDatabaseSchema, ".", pathwayAnalysisPaths)
   } else {
     pathwayAnalysisPaths <- paste0("#", pathwayAnalysisPaths)
   }
 
   pathwayAnalysisStats <- "pa_stats"
-  if (!is.null(targetDatabaseSChema)) {
+  if (!is.null(targetDatabaseSchema)) {
     pathwayAnalysisStats <-
-      paste0(targetDatabaseSChema, ".", pathwayAnalysisStats)
+      paste0(targetDatabaseSchema, ".", pathwayAnalysisStats)
   } else {
     pathwayAnalysisStats <- paste0("#", pathwayAnalysisStats)
   }
@@ -341,23 +341,23 @@ executeCohortPathways <- function(connectionDetails = NULL,
   targetCohortTable <-
     paste0(cohortDatabaseSchema, ".", cohortTableName)
 
-  if (!is.null(targetDatabaseSChema)) {
-    tablesInTargetDatabaseSchema <-
+  if (!is.null(targetDatabaseSchema)) {
+    tablesIntargetDatabaseSchema <-
       DatabaseConnector::getTableNames(
         connection = connection,
-        databaseSchema = targetDatabaseSChema
+        databaseSchema = targetDatabaseSchema
       )
 
-    if ("pa_codes" %in% tolower(tablesInTargetDatabaseSchema)) {
+    if ("pa_codes" %in% tolower(tablesIntargetDatabaseSchema)) {
       createTablePathwayAnalysisCodes <- FALSE
     }
-    if ("pa_events" %in% tolower(tablesInTargetDatabaseSchema)) {
+    if ("pa_events" %in% tolower(tablesIntargetDatabaseSchema)) {
       createTablePathwayAnalysisEvents <- FALSE
     }
-    if ("pa_paths" %in% tolower(tablesInTargetDatabaseSchema)) {
+    if ("pa_paths" %in% tolower(tablesIntargetDatabaseSchema)) {
       createTablePathwayAnalysisPaths <- FALSE
     }
-    if ("pa_stats" %in% tolower(tablesInTargetDatabaseSchema)) {
+    if ("pa_stats" %in% tolower(tablesIntargetDatabaseSchema)) {
       createTablePathwayAnalysisStats <- FALSE
     }
   }
@@ -675,10 +675,10 @@ executeCohortPathways <- function(connectionDetails = NULL,
     append = FALSE
   )
 
-  if (!is.null(targetDatabaseSChema)) {
+  if (!is.null(targetDatabaseSchema)) {
     DatabaseConnector::insertTable(
       connection = connection,
-      databaseSchema = targetDatabaseSChema,
+      databaseSchema = targetDatabaseSchema,
       tableName = pathwayAnalysisCodes,
       data = pathwayAnalysisCodesData,
       dropTableIfExists = FALSE,

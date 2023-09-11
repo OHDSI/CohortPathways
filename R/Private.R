@@ -20,7 +20,7 @@ createIfNotExist <-
            recursive = TRUE,
            errorMessage = NULL) {
     if (is.null(errorMessage) |
-      !class(errorMessage) == "AssertColection") {
+      !inherits(errorMessage, "AssertCollection")) {
       errorMessage <- checkmate::makeAssertCollection()
     }
     if (!is.null(type)) {

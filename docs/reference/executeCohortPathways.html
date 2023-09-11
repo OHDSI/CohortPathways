@@ -18,7 +18,7 @@ Assumes the cohorts have already been instantiated."><!-- mathjax --><script src
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortPathways</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.1</span>
       </span>
     </div>
 
@@ -63,7 +63,7 @@ Assumes the cohorts have already been instantiated.</p>
 <span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">cohortDatabaseSchema</span>,</span>
 <span>  cohortTableName <span class="op">=</span> <span class="st">"cohort"</span>,</span>
-<span>  targetDatabaseSChema <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  targetDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tempEmulationSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sqlRenderTempEmulationSchema"</span><span class="op">)</span>,</span>
 <span>  <span class="va">targetCohortIds</span>,</span>
 <span>  <span class="va">eventCohortIds</span>,</span>
@@ -80,7 +80,7 @@ Assumes the cohorts have already been instantiated.</p>
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>connectionDetails</dt>
-<dd><p>An object of type <code>connectionDetails</code> as created using the
+<dd><p>An object of type connectionDetails as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></dd>
@@ -89,13 +89,25 @@ provided.</p></dd>
 <dt>connection</dt>
 <dd><p>An object of type <code>connection</code> as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/connect.html" class="external-link">connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
+DatabaseConnector package. Can be left NULL if connectionDetails
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></dd>
 
 
 <dt>cohortDatabaseSchema</dt>
 <dd><p>Schema name where your cohort tables reside. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.</p></dd>
+
+
+<dt>cohortTableName</dt>
+<dd><p>The name of the cohort table.</p></dd>
+
+
+<dt>targetDatabaseSchema</dt>
+<dd><p>(Optional) Schema name where output pathway tables would reside. This is also known as
+as resultsDatabaseSChema. If not specified, scratch schema will be used. The output may not
+persist in the database after disconnection. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.</p></dd>
 
@@ -115,8 +127,8 @@ privileges where temp tables can be created.</p></dd>
 
 
 <dt>cohortDefinitionSet</dt>
-<dd><p>A data frame object with minimum two columns, cohortId and cohortName. It should have all the cohortId's
-in targetCohortId and eventCohortId. This is the source of cohort names.</p></dd>
+<dd><p>A data frame object with minimum two columns, cohortId and in
+targetCohortId and eventCohortId. This is the source of cohort names.</p></dd>
 
 
 <dt>exportFolder</dt>
@@ -133,27 +145,17 @@ does not exist it will be created.</p></dd>
 
 
 <dt>maxDepth</dt>
-<dd><p>(Default = 5) Maximum number of steps in a given pathway to be included in the sunburst plot.</p></dd>
+<dd><p>(Default = 5) Maximum number of steps in a given pathway to be included in the sunburst plot</p></dd>
 
 
 <dt>collapseWindow</dt>
-<dd><p>(Default = 30) Any dates found within the specified collapse days will be reassigned the earliest date. Collapsing dates reduces pathway variation, leading to a reduction in 'noise' in the result.</p></dd>
+<dd><p>(Default = 30) Any dates found within the specified collapse days will
+be reassigned the earliest date. Collapsing dates reduces pathway
+variation, leading to a reduction in 'noise' in the result.</p></dd>
 
 
 <dt>overwrite</dt>
 <dd><p>(Default = TRUE) Do you want to overwrite results?</p></dd>
-
-
-<dt>targetDatabaseSchema</dt>
-<dd><p>(Optional) Schema name where output pathway tables would reside. This is also known as
-as resultsDatabaseSChema. If not specified, scratch schema will be used. The output may not
-persist in the database after disconnection. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.</p></dd>
-
-
-<dt>cohortTable</dt>
-<dd><p>The name of the cohort table.</p></dd>
 
 </dl></div>
     <div id="value">

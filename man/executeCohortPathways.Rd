@@ -9,7 +9,7 @@ executeCohortPathways(
   connection = NULL,
   cohortDatabaseSchema,
   cohortTableName = "cohort",
-  targetDatabaseSChema = NULL,
+  targetDatabaseSchema = NULL,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   targetCohortIds,
   eventCohortIds,
@@ -23,14 +23,14 @@ executeCohortPathways(
 )
 }
 \arguments{
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\item{connectionDetails}{An object of type connectionDetails as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
 provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+DatabaseConnector package. Can be left NULL if connectionDetails
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
 
@@ -39,6 +39,12 @@ this should include both the database and schema name, for example
 'scratch.dbo'.}
 
 \item{cohortTableName}{The name of the cohort table.}
+
+\item{targetDatabaseSchema}{(Optional) Schema name where output pathway tables would reside. This is also known as
+as resultsDatabaseSChema. If not specified, scratch schema will be used. The output may not
+persist in the database after disconnection. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
 
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support
 temp tables. To emulate temp tables, provide a schema with write
@@ -65,12 +71,6 @@ be reassigned the earliest date. Collapsing dates reduces pathway
 variation, leading to a reduction in 'noise' in the result.}
 
 \item{overwrite}{(Default = TRUE) Do you want to overwrite results?}
-
-\item{targetDatabaseSchema}{(Optional) Schema name where output pathway tables would reside. This is also known as
-as resultsDatabaseSChema. If not specified, scratch schema will be used. The output may not
-persist in the database after disconnection. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.}
 }
 \value{
 Nothing is returned
