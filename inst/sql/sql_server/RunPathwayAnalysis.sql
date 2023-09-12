@@ -66,7 +66,7 @@ SELECT
     when e.cohort_start_date = e.cohort_end_date then CAST(dateadd(d,1,e.cohort_end_date) AS DATETIME) /* cast is required for BigQuery */
     else e.cohort_end_date
   end cohort_end_date
-INTO #collapsed_dates_events
+INTO #coll_dates_events
 FROM (
   SELECT
     event.event_cohort_index,
@@ -93,13 +93,13 @@ with cteEndDates (SUBJECT_ID, EVENT_COHORT_INDEX, END_DATE) as -- the magic: ide
 		(
 			-- select the start dates, assigning a row number to each
 			Select SUBJECT_ID, EVENT_COHORT_INDEX, COHORT_START_DATE AS EVENT_DATE, 1 as EVENT_TYPE, ROW_NUMBER() OVER (PARTITION BY SUBJECT_ID, EVENT_COHORT_INDEX ORDER BY COHORT_START_DATE) as START_ORDINAL
-			from #collapsed_dates_events
+			from #coll_dates_events
 		
 			UNION ALL
 		
 			-- pad the end dates by 30 to allow a grace period for overlapping ranges.
 			select SUBJECT_ID, EVENT_COHORT_INDEX, COHORT_END_DATE, -1 as EVENT_TYPE, NULL
-			FROM #collapsed_dates_events
+			FROM #coll_dates_events
 		) RAWDATA
 	) E
 	WHERE (2 * E.START_ORDINAL) - E.OVERALL_ORD = 0
@@ -111,7 +111,7 @@ with cteEndDates (SUBJECT_ID, EVENT_COHORT_INDEX, END_DATE) as -- the magic: ide
 		re.EVENT_COHORT_INDEX,
 		re.COHORT_START_DATE,
 		MIN(ed.END_DATE) as ERA_END_DATE
-	FROM #collapsed_dates_events re
+	FROM #coll_dates_events re
 	JOIN cteEndDates ed on re.SUBJECT_ID = ed.SUBJECT_ID and re.EVENT_COHORT_INDEX = ed.EVENT_COHORT_INDEX and ed.END_DATE >= re.COHORT_START_DATE
 	GROUP BY 
 		re.SUBJECT_ID, 
@@ -128,8 +128,8 @@ select SUBJECT_ID, EVENT_COHORT_INDEX, COHORT_START_DATE, COHORT_END_DATE
 INTO #event_cohort_eras
 from cteFinalEras;
 
-TRUNCATE TABLE #collapsed_dates_events;
-DROP TABLE #collapsed_dates_events;
+TRUNCATE TABLE #coll_dates_events;
+DROP TABLE #coll_dates_events;
 
 TRUNCATE TABLE #date_replacements;
 DROP TABLE #date_replacements;
@@ -195,7 +195,7 @@ SELECT
   subject_id,
   cohort_start_date,
   cohort_end_date
-INTO #non_repetitive_events
+INTO #non_rep_events
 FROM (
   SELECT
     combo_id, subject_id, cohort_start_date, cohort_end_date,
@@ -221,7 +221,7 @@ SELECT
   combo_id,
   cohort_start_date,
   cohort_end_date
-FROM #non_repetitive_events
+FROM #non_rep_events
 WHERE 1 = 1 {@max_depth != ''}?{ AND ordinal <= @max_depth };
 
 INSERT INTO @pathway_analysis_stats (pathway_analysis_generation_id, target_cohort_id, target_cohort_count, pathways_count)
@@ -242,8 +242,8 @@ FROM (
   AND target_cohort_id = @pathway_target_cohort_id
 ) pathway_count;
 
-TRUNCATE TABLE #non_repetitive_events;
-DROP TABLE #non_repetitive_events;
+TRUNCATE TABLE #non_rep_events;
+DROP TABLE #non_rep_events;
 
 TRUNCATE TABLE #combo_events;
 DROP TABLE #combo_events;

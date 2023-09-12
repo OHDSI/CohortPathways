@@ -2,10 +2,8 @@ library(testthat)
 library(CohortPathways)
 library(dplyr)
 
-cohortTableName <- paste0(
-  "ct_",
-  paste(sample(letters, 10), collapse = "")
-)
+cohortTableName <- paste0("ct_",
+                          paste(sample(letters, 10), collapse = ""))
 
 dbms <- getOption("dbms", default = "postgresql")
 message("************* Testing on ", dbms, " *************")
@@ -16,17 +14,15 @@ if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
   jdbcDriverFolder <- tempfile("jdbcDrivers")
   dir.create(jdbcDriverFolder, showWarnings = FALSE)
   DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
-
+  
   if (!dbms %in% c("postgresql")) {
     DatabaseConnector::downloadJdbcDrivers(dbms, pathToDriver = jdbcDriverFolder)
   }
-
-  withr::defer(
-    {
-      unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
-    },
-    testthat::teardown_env()
-  )
+  
+  withr::defer({
+    unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
+  },
+  testthat::teardown_env())
 }
 
 folder <- tempfile()
@@ -87,8 +83,7 @@ if (cdmDatabaseSchema == "" || dbServer == "") {
 }
 
 
-withr::defer(
-  {
-  },
-  testthat::teardown_env()
-)
+withr::defer({
+  
+},
+testthat::teardown_env())

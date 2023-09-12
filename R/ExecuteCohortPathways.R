@@ -94,44 +94,52 @@ executeCohortPathways <- function(connectionDetails = NULL,
                                   overwrite = TRUE) {
   start <- Sys.time()
   message(paste0("Run Cohort Pathways started at ", start))
-
+  
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertCharacter(
-    x = cohortDatabaseSchema,
-    min.len = 1,
+  checkmate::assertCharacter(x = cohortDatabaseSchema,
+                             min.len = 1,
+                             add = errorMessage)
+  if (!is.null(targetDatabaseSchema)) {
+    checkmate::assertCharacter(x = cohortDatabaseSchema,
+                               min.len = 1,
+                               add = errorMessage)
+  }
+  checkmate::assertDouble(
+    x = minCellCount,
+    lower = 0,
+    len = 1,
     add = errorMessage
   )
-  if (!is.null(targetDatabaseSchema)) {
-    checkmate::assertCharacter(
-      x = cohortDatabaseSchema,
-      min.len = 1,
-      add = errorMessage
-    )
-  }
-  minCellCount <- utils::type.convert(minCellCount, as.is = TRUE)
-  checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
   checkmate::assertLogical(
     x = allowRepeats,
     any.missing = FALSE,
     len = 1,
     add = errorMessage
   )
-  checkmate::assertInteger(x = maxDepth, lower = 0, add = errorMessage)
-  checkmate::assertInteger(x = collapseWindow, lower = 0, add = errorMessage)
+  checkmate::assertDouble(
+    x = maxDepth,
+    lower = 0,
+    len = 1,
+    add = errorMessage
+  )
+  checkmate::assertDouble(
+    x = collapseWindow,
+    lower = 0,
+    len = 1,
+    add = errorMessage
+  )
   checkmate::assertLogical(
     x = overwrite,
     any.missing = FALSE,
     len = 1,
     add = errorMessage
   )
-
+  
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   errorMessage <-
-    createIfNotExist(
-      type = "folder",
-      name = exportFolder,
-      errorMessage = errorMessage
-    )
+    createIfNotExist(type = "folder",
+                     name = exportFolder,
+                     errorMessage = errorMessage)
   checkmate::assertDataFrame(
     x = cohortDefinitionSet,
     min.rows = length(c(targetCohortIds, eventCohortIds) %>% unique()),
@@ -142,85 +150,73 @@ executeCohortPathways <- function(connectionDetails = NULL,
   )
   checkmate::assertNames(
     names(cohortDefinitionSet),
-    must.include = c(
-      "cohortId",
-      "cohortName"
-    ),
+    must.include = c("cohortId",
+                     "cohortName"),
     add = errorMessage
   )
   checkmate::reportAssertions(collection = errorMessage)
-
+  
   # allow repeats is used as text 'true' or 'false' in sql
   if (allowRepeats) {
     allowRepeats <- "true"
   } else {
     allowRepeats <- "false"
   }
-
-
+  
+  
   if (file.exists(file.path(exportFolder, "pathwaysAnalysisPaths.csv"))) {
     if (!overwrite) {
-      stop(
-        "   Previous pathwaysAnalysisPaths.csv exists in export folder",
-        exportFolder
-      )
+      stop("   Previous pathwaysAnalysisPaths.csv exists in export folder",
+           exportFolder)
     } else {
       message(
         "   Previous pathwaysAnalysisPaths.csv exists in export folder and will be replaced."
       )
     }
   }
-
+  
   if (file.exists(file.path(exportFolder, "pathwaysAnalysisPaths.csv"))) {
     if (!overwrite) {
-      stop(
-        "   Previous pathwaysAnalysisPaths.csv exists in export folder.",
-        exportFolder
-      )
+      stop("   Previous pathwaysAnalysisPaths.csv exists in export folder.",
+           exportFolder)
     } else {
       message(
         "   Previous pathwaysAnalysisPaths.csv exists in export folder and will be replaced."
       )
     }
   }
-
+  
   if (file.exists(file.path(exportFolder, "pathwayAnalysisCodes.csv"))) {
     if (!overwrite) {
-      stop(
-        "   Previous pathwayAnalysisCodes.csv exists in export folder.",
-        exportFolder
-      )
+      stop("   Previous pathwayAnalysisCodes.csv exists in export folder.",
+           exportFolder)
     } else {
       message("   Previous pathwayAnalysisCodes.csv exists in export folder and will be replaced.")
     }
   }
-
+  
   if (file.exists(file.path(exportFolder, "pathwayAnalysisCodesLong.csv"))) {
     if (!overwrite) {
-      stop(
-        "   Previous pathwayAnalysisCodesLong.csv exists in export folder.",
-        exportFolder
-      )
+      stop("   Previous pathwayAnalysisCodesLong.csv exists in export folder.",
+           exportFolder)
     } else {
       message(
         "   Previous pathwayAnalysisCodesLong.csv exists in export folder and will be replaced."
       )
     }
   }
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   # perform checks on cohort database schema.
   tablesInCohortDatabaseSchema <-
-    DatabaseConnector::getTableNames(
-      connection = connection,
-      databaseSchema = cohortDatabaseSchema
-    ) %>%
+    DatabaseConnector::getTableNames(connection = connection,
+                                     databaseSchema = cohortDatabaseSchema) %>%
     tolower()
-
+  
   cohortTableName <- tolower(cohortTableName)
   if (!cohortTableName %in% c(tablesInCohortDatabaseSchema, "")) {
     stop(
@@ -233,7 +229,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       )
     )
   }
-
+  
   cohortCounts <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT cohort_definition_id AS cohort_id,
@@ -248,18 +244,18 @@ executeCohortPathways <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-
+  
   if (nrow(cohortCounts) < length(c(targetCohortIds, eventCohortIds) %>% unique())) {
     message("Not all cohorts have more than 0 records.")
-
+    
     if (nrow(cohortCounts %>% dplyr::filter(.data$cohortId %in% c(targetCohortIds))) == 0) {
       stop("None of the target cohorts are instantiated.")
     }
-
+    
     if (nrow(cohortCounts %>% dplyr::filter(.data$cohortId %in% c(eventCohortIds))) == 0) {
       stop("None of the event cohorts are instantiated.")
     }
-
+    
     message(
       sprintf(
         "    Found %s of %s (%1.2f%%) target cohorts instantiated. ",
@@ -289,15 +285,15 @@ executeCohortPathways <- function(connectionDetails = NULL,
       )
     )
   }
-
+  
   targetCohortTable <-
     paste0(cohortDatabaseSchema, ".", cohortTableName)
-
+  
   instantiatedEventCohortIds <-
     intersect(x = eventCohortIds, y = cohortCounts$cohortId)
   instantiatedTargetCohortIds <-
     intersect(x = targetCohortIds, y = cohortCounts$cohortId)
-
+  
   pathwayAnalysisCodes <- "pa_codes"
   if (!is.null(targetDatabaseSchema)) {
     # pathwayAnalysisCodes <-
@@ -307,7 +303,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
     pathwayAnalysisCodes <- paste0("#", pathwayAnalysisCodes)
     pathwayAnalysisCodesTableIsTemp <- TRUE
   }
-
+  
   pathwayAnalysisEvents <- "pa_events"
   if (!is.null(targetDatabaseSchema)) {
     pathwayAnalysisEvents <-
@@ -315,7 +311,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
   } else {
     pathwayAnalysisEvents <- paste0("#", pathwayAnalysisEvents)
   }
-
+  
   pathwayAnalysisPaths <- "pa_paths"
   if (!is.null(targetDatabaseSchema)) {
     pathwayAnalysisPaths <-
@@ -323,7 +319,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
   } else {
     pathwayAnalysisPaths <- paste0("#", pathwayAnalysisPaths)
   }
-
+  
   pathwayAnalysisStats <- "pa_stats"
   if (!is.null(targetDatabaseSchema)) {
     pathwayAnalysisStats <-
@@ -331,23 +327,21 @@ executeCohortPathways <- function(connectionDetails = NULL,
   } else {
     pathwayAnalysisStats <- paste0("#", pathwayAnalysisStats)
   }
-
+  
   # perform checks on target database schema.
   createTablePathwayAnalysisCodes <- TRUE
   createTablePathwayAnalysisEvents <- TRUE
   createTablePathwayAnalysisPaths <- TRUE
   createTablePathwayAnalysisStats <- TRUE
-
+  
   targetCohortTable <-
     paste0(cohortDatabaseSchema, ".", cohortTableName)
-
+  
   if (!is.null(targetDatabaseSchema)) {
     tablesIntargetDatabaseSchema <-
-      DatabaseConnector::getTableNames(
-        connection = connection,
-        databaseSchema = targetDatabaseSchema
-      )
-
+      DatabaseConnector::getTableNames(connection = connection,
+                                       databaseSchema = targetDatabaseSchema)
+    
     if ("pa_codes" %in% tolower(tablesIntargetDatabaseSchema)) {
       createTablePathwayAnalysisCodes <- FALSE
     }
@@ -361,7 +355,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       createTablePathwayAnalysisStats <- FALSE
     }
   }
-
+  
   if (createTablePathwayAnalysisCodes) {
     sql <-
       SqlRender::readSql(
@@ -382,7 +376,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       pathway_analysis_codes = pathwayAnalysisCodes
     )
   }
-
+  
   if (createTablePathwayAnalysisEvents) {
     sql <-
       SqlRender::readSql(
@@ -403,7 +397,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       pathway_analysis_events = pathwayAnalysisEvents
     )
   }
-
+  
   if (createTablePathwayAnalysisPaths) {
     sql <-
       SqlRender::readSql(
@@ -424,7 +418,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       pathway_analysis_paths = pathwayAnalysisPaths
     )
   }
-
+  
   if (createTablePathwayAnalysisStats) {
     sql <-
       SqlRender::readSql(
@@ -445,7 +439,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       pathway_analysis_stats = pathwayAnalysisStats
     )
   }
-
+  
   pathwayAnalysisSql <-
     SqlRender::readSql(
       sourceFile = system.file(
@@ -455,13 +449,13 @@ executeCohortPathways <- function(connectionDetails = NULL,
         package = utils::packageName()
       )
     )
-
+  
   generationIds <- c()
   eventCohortIdIndexMaps <-
     dplyr::tibble(eventCohortId = instantiatedEventCohortIds %>% unique()) %>%
     dplyr::arrange(.data$eventCohortId) %>%
     dplyr::mutate(cohortIndex = dplyr::row_number())
-
+  
   pathwaysAnalysisPathsSql <-
     SqlRender::readSql(
       sourceFile = system.file(
@@ -471,18 +465,16 @@ executeCohortPathways <- function(connectionDetails = NULL,
         package = utils::packageName()
       )
     )
-
+  
   for (i in (1:length(instantiatedTargetCohortIds))) {
     targetCohortId <- instantiatedTargetCohortIds[[i]]
-
+    
     generationId <-
       (as.integer(format(Sys.Date(), "%Y%m%d")) * 1000) +
-      sample(
-        x = 1:1000,
-        size = 1,
-        replace = FALSE
-      )
-
+      sample(x = 1:1000,
+             size = 1,
+             replace = FALSE)
+    
     eventCohortIdIndexMap <- eventCohortIdIndexMaps %>%
       dplyr::rowwise() %>%
       dplyr::mutate(
@@ -496,7 +488,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       ) %>%
       dplyr::pull(.data$sql) %>%
       paste0(collapse = " union all ")
-
+    
     message(
       paste0(
         "   Generating Cohort Pathways for target cohort: ",
@@ -506,7 +498,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
         "."
       )
     )
-
+    
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = pathwayAnalysisSql,
@@ -524,7 +516,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       generation_id = generationId,
       event_cohort_id_index_map = eventCohortIdIndexMap
     )
-
+    
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = pathwaysAnalysisPathsSql,
@@ -539,7 +531,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
     message(" Done.")
     generationIds <- c(generationId, generationIds)
   }
-
+  
   pathwayAnalysisStatsData <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
@@ -552,7 +544,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       pathways_analysis_generation_ids = generationIds
     ) %>%
     dplyr::tibble()
-
+  
   pathwaysAnalysisPathsData <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
@@ -565,7 +557,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       pathways_analysis_generation_ids = generationIds
     ) %>%
     dplyr::tibble()
-
+  
   pathwaycomboIds <- pathwaysAnalysisPathsData %>%
     dplyr::select(dplyr::starts_with("step")) %>%
     tidyr::pivot_longer(
@@ -578,43 +570,36 @@ executeCohortPathways <- function(connectionDetails = NULL,
     dplyr::filter(.data$comboIds > 0) %>%
     dplyr::select(.data$comboIds) %>%
     dplyr::arrange(.data$comboIds)
-
+  
   pathwayAnalysisCodesLong <- c()
   for (i in (1:nrow(pathwaycomboIds))) {
-    cohortIndex <- extractBitSum(x = pathwaycomboIds[i, ]$comboIds)
+    cohortIndex <- extractBitSum(x = pathwaycomboIds[i,]$comboIds)
     combisData <- dplyr::tibble(cohortIndex = cohortIndex) %>%
-      dplyr::mutate(comboId = pathwaycomboIds[i, ]$comboIds) %>%
+      dplyr::mutate(comboId = pathwaycomboIds[i,]$comboIds) %>%
       dplyr::mutate(targetCohortId = targetCohortId) %>%
       dplyr::inner_join(eventCohortIdIndexMaps,
-        by = "cohortIndex"
-      ) %>%
+                        by = "cohortIndex") %>%
       dplyr::inner_join(cohortDefinitionSet,
-        by = c("eventCohortId" = "cohortId")
-      ) %>%
+                        by = c("eventCohortId" = "cohortId")) %>%
       dplyr::rename(eventCohortName = .data$cohortName)
-
-    pathwayAnalysisCodesLong <- dplyr::bind_rows(
-      combisData,
-      pathwayAnalysisCodesLong
-    )
+    
+    pathwayAnalysisCodesLong <- dplyr::bind_rows(combisData,
+                                                 pathwayAnalysisCodesLong)
   }
-
+  
   isCombo <- pathwayAnalysisCodesLong %>%
-    dplyr::select(
-      .data$targetCohortId,
-      .data$comboId,
-      .data$eventCohortId
-    ) %>%
+    dplyr::select(.data$targetCohortId,
+                  .data$comboId,
+                  .data$eventCohortId) %>%
     dplyr::distinct() %>%
     dplyr::group_by(.data$targetCohortId, .data$comboId) %>%
     dplyr::summarise(numberOfEvents = dplyr::n()) %>%
     dplyr::mutate(isCombo = dplyr::case_when(.data$numberOfEvents > 1 ~ 1, TRUE ~
-      0))
-
+                                               0))
+  
   pathwayAnalysisCodesLong <- pathwayAnalysisCodesLong %>%
     dplyr::inner_join(isCombo,
-      by = c("targetCohortId", "comboId")
-    ) %>%
+                      by = c("targetCohortId", "comboId")) %>%
     tidyr::crossing(dplyr::tibble(pathwayAnalysisGenerationId = generationIds)) %>%
     dplyr::select(
       .data$pathwayAnalysisGenerationId,
@@ -626,7 +611,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       .data$numberOfEvents
     ) %>%
     dplyr::rename("code" = .data$comboId)
-
+  
   pathwayAnalysisCodesData <- pathwayAnalysisCodesLong %>%
     dplyr::select(
       .data$pathwayAnalysisGenerationId,
@@ -634,47 +619,43 @@ executeCohortPathways <- function(connectionDetails = NULL,
       .data$eventCohortName,
       .data$isCombo
     ) %>%
-    dplyr::group_by(
-      .data$pathwayAnalysisGenerationId,
-      .data$code,
-      .data$isCombo
-    ) %>%
+    dplyr::group_by(.data$pathwayAnalysisGenerationId,
+                    .data$code,
+                    .data$isCombo) %>%
     dplyr::mutate(name = paste0(.data$eventCohortName, collapse = " + ")) %>%
-    dplyr::select(
-      .data$pathwayAnalysisGenerationId,
-      .data$code,
-      .data$name,
-      .data$isCombo
-    )
-
+    dplyr::select(.data$pathwayAnalysisGenerationId,
+                  .data$code,
+                  .data$name,
+                  .data$isCombo)
+  
   readr::write_excel_csv(
     x = pathwayAnalysisStatsData %>% SqlRender::camelCaseToSnakeCaseNames(),
     file = file.path(exportFolder, "pathwayAnalysisStats.csv"),
     na = "",
     append = FALSE
   )
-
+  
   readr::write_excel_csv(
     x = pathwaysAnalysisPathsData %>% SqlRender::camelCaseToSnakeCaseNames(),
     file = file.path(exportFolder, "pathwaysAnalysisPaths.csv"),
     na = "",
     append = FALSE
   )
-
+  
   readr::write_excel_csv(
     x = pathwayAnalysisCodesData %>% SqlRender::camelCaseToSnakeCaseNames(),
     file = file.path(exportFolder, "pathwayAnalysisCodes.csv"),
     na = "",
     append = FALSE
   )
-
+  
   readr::write_excel_csv(
     x = pathwayAnalysisCodesLong %>% SqlRender::camelCaseToSnakeCaseNames(),
     file = file.path(exportFolder, "pathwayAnalysisCodesLong.csv"),
     na = "",
     append = FALSE
   )
-
+  
   if (!is.null(targetDatabaseSchema)) {
     DatabaseConnector::insertTable(
       connection = connection,
@@ -687,13 +668,11 @@ executeCohortPathways <- function(connectionDetails = NULL,
       camelCaseToSnakeCase = TRUE
     )
   }
-
+  
   delta <- Sys.time() - start
-
-  message(
-    "Computing Cohort Pathways took ",
-    signif(delta, 3),
-    " ",
-    attr(delta, "units")
-  )
+  
+  message("Computing Cohort Pathways took ",
+          signif(delta, 3),
+          " ",
+          attr(delta, "units"))
 }
