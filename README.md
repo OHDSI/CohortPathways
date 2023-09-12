@@ -14,6 +14,10 @@ Features
 ========
 - Calculate aggregate sequence of transitions between the Event Cohorts among those people in the Target Cohorts.
 
+Acknowledgements
+============
+
+
 Technology
 ============
 CohortPathways is an R package.
