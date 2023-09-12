@@ -19,6 +19,10 @@ styler::style_pkg()
 OhdsiRTools::checkUsagePackage("CohortPathways")
 OhdsiRTools::updateCopyrightYearFolder()
 
+# Devtools check -----------------------------------------------------------
+devtools::spell_check()
+devtools::check()
+
 # Create manual -----------------------------------------------------------
 unlink("extras/CohortPathways.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortPathways.pdf")

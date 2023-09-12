@@ -6,12 +6,11 @@
 \alias{CohortPathways-package}
 \title{CohortPathways: Create Pathways From Target to Event Cohorts}
 \description{
-This software tool is designed to compute the temporal relationship defined as pathways between any two instantied cohorts. The cohorts are input as Target and event cohorts.
+This software tool is designed to compute the temporal relationship defined as pathways between any two instantiated cohorts. The cohorts are input as Target and event cohorts.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://ohdsi.github.io/CohortPathways/}
   \item \url{https://github.com/OHDSI/CohortPathways}
   \item Report bugs at \url{https://github.com/OHDSI/CohortPathways/issues}
 }

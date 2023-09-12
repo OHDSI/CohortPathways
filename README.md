@@ -8,15 +8,11 @@ CohortPathways
 Introduction
 ============
 
-THIS PACKAGE IS UNDER ACTIVE DEVELOPMENT. IT IS NOT PART OF HADES.
-
-
-Cohort Pathway is defined as the process of generating an aggregated sequence of transitions between the Event Cohorts among those people in the Target Cohorts. CohortPathways is a R package that given a set of instantiated target and event cohorts, allows calculates and visualizes such sequence of transitions.
+Cohort Pathway is defined as the process of generating an aggregated sequence of transitions between the Event Cohorts among those people in the Target Cohorts. CohortPathways is a R package that given a set of instantiated target and event cohorts, calculates such sequence of transitions.
 
 Features
 ========
 - Calculate aggregate sequence of transitions between the Event Cohorts among those people in the Target Cohorts.
-- Visualize the transition in tabular and graphical format in both static and dynamic (R Shiny).
 
 Technology
 ============

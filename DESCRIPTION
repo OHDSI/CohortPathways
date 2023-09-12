@@ -9,7 +9,7 @@ Authors@R: c(
   )
 Maintainer: Gowtham Rao <rao@ohdsi.org>
 Description: This software tool is designed to compute the temporal relationship defined as pathways
-    between any two instantied cohorts. The cohorts are input as Target and event cohorts.
+    between any two instantiated cohorts. The cohorts are input as Target and event cohorts.
 Depends:
 	DatabaseConnector (>= 5.0.0),
 	R (>= 4.1.0)
@@ -33,5 +33,5 @@ VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 Language: en-US
-URL: https://ohdsi.github.io/CohortPathways/, https://github.com/OHDSI/CohortPathways
+URL: https://github.com/OHDSI/CohortPathways
 BugReports: https://github.com/OHDSI/CohortPathways/issues
