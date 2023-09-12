@@ -7,7 +7,7 @@ cohortTableName <- paste0(
   paste(sample(letters, 10), collapse = "")
 )
 
-dbms <- getOption("dbms", default = "sql server")
+dbms <- getOption("dbms", default = "postgresql")
 message("************* Testing on ", dbms, " *************")
 
 if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
