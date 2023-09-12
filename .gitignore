@@ -9,3 +9,9 @@ pathwaysAnalysisPathsData.csv
 pathwayAnalysisCodesLong.csv
 pathwayAnalysisCodes.csv
 pathwaysAnalysisPathsData.csv
+sql/sql_server/CreateTablePathwayAnalysisCodes.sql
+sql/sql_server/CreateTablePathwayAnalysisEvents.sql
+sql/sql_server/CreateTablePathwayAnalysisPaths.sql
+sql/sql_server/CreateTablePathwayAnalysisStats.sql
+sql/sql_server/PathwayAnalysisPaths.sql
+sql/sql_server/RunPathwayAnalysis.sql

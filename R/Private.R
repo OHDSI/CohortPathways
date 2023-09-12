@@ -29,7 +29,9 @@ createIfNotExist <-
       }
       if (type %in% c("folder")) {
         if (!file.exists(gsub("/$", "", name))) {
-          dir.create(name, recursive = recursive)
+          dir.create(path = name, 
+                     showWarnings = FALSE,
+                     recursive = recursive)
           message("Created ", type, " at ", name)
         }
       }

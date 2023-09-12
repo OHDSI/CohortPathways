@@ -125,6 +125,20 @@ testthat::test_that("Execute Cohort Pathways", {
       col_types = readr::cols()
     ) %>% SqlRender::snakeCaseToCamelCaseNames()
   testthat::expect_true(object = nrow(pathwayAnalysisStatsData) > 0)
+  
+  DatabaseConnector::disconnect(connection = connection)
+  
+  CohortPathways::executeCohortPathways(
+    connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    targetDatabaseSchema = cohortDatabaseSchema,
+    cohortTableName = cohortTableName,
+    targetCohortIds = c(1, 2),
+    eventCohortIds = c(10, 20),
+    cohortDefinitionSet = cohortDefinitionSet,
+    exportFolder = exportFolder,
+    overwrite = TRUE
+  )
 
   DatabaseConnector::renderTranslateExecuteSql(
     connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
