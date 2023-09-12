@@ -44,7 +44,7 @@ testthat::test_that("Execute Cohort Pathways", {
     connection = connection,
     databaseSchema = cohortDatabaseSchema,
     tableName = cohortTableName,
-    data = dplyr::bind_rows(targetCohort, eventCohort) %>% dplyr::distinct(),
+    data = dplyr::bind_rows(targetCohort, eventCohort) |> dplyr::distinct(),
     dropTableIfExists = TRUE,
     createTable = TRUE,
     tempTable = FALSE,
@@ -62,13 +62,13 @@ testthat::test_that("Execute Cohort Pathways", {
       cohort_database_schema = cohortDatabaseSchema,
       table_name = cohortTableName,
       snakeCaseToCamelCase = TRUE
-    ) %>%
+    ) |>
     dplyr::tibble()
 
   testthat::expect_equal(
-    object = dataInserted %>%
+    object = dataInserted |>
       nrow(),
-    expected = nrow(dplyr::bind_rows(targetCohort, eventCohort) %>% dplyr::distinct())
+    expected = nrow(dplyr::bind_rows(targetCohort, eventCohort) |> dplyr::distinct())
   )
 
   exportFolder <- tempfile()
@@ -102,28 +102,28 @@ testthat::test_that("Execute Cohort Pathways", {
     readr::read_csv(
       file = file.path(exportFolder, "pathwayAnalysisCodes.csv"),
       col_types = readr::cols()
-    ) %>% SqlRender::snakeCaseToCamelCaseNames()
+    ) |> SqlRender::snakeCaseToCamelCaseNames()
   testthat::expect_true(object = nrow(pathwayAnalysisCodes) > 0)
 
   pathwayAnalysisCodesLong <-
     readr::read_csv(
       file = file.path(exportFolder, "pathwayAnalysisCodesLong.csv"),
       col_types = readr::cols()
-    ) %>% SqlRender::snakeCaseToCamelCaseNames()
+    ) |> SqlRender::snakeCaseToCamelCaseNames()
   testthat::expect_true(object = nrow(pathwayAnalysisCodesLong) > 0)
 
   pathwayAnalysisStatsData <-
     readr::read_csv(
       file = file.path(exportFolder, "pathwayAnalysisStats.csv"),
       col_types = readr::cols()
-    ) %>% SqlRender::snakeCaseToCamelCaseNames()
+    ) |> SqlRender::snakeCaseToCamelCaseNames()
   testthat::expect_true(object = nrow(pathwayAnalysisStatsData) > 0)
 
   pathwaysAnalysisPathsData <-
     readr::read_csv(
       file = file.path(exportFolder, "pathwaysAnalysisPaths.csv"),
       col_types = readr::cols()
-    ) %>% SqlRender::snakeCaseToCamelCaseNames()
+    ) |> SqlRender::snakeCaseToCamelCaseNames()
   testthat::expect_true(object = nrow(pathwayAnalysisStatsData) > 0)
   
   DatabaseConnector::disconnect(connection = connection)

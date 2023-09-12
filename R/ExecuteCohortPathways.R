@@ -142,7 +142,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
                      errorMessage = errorMessage)
   checkmate::assertDataFrame(
     x = cohortDefinitionSet,
-    min.rows = length(c(targetCohortIds, eventCohortIds) %>% unique()),
+    min.rows = length(c(targetCohortIds, eventCohortIds) |> unique()),
     any.missing = FALSE,
     min.cols = 2,
     null.ok = FALSE,
@@ -214,7 +214,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
   # perform checks on cohort database schema.
   tablesInCohortDatabaseSchema <-
     DatabaseConnector::getTableNames(connection = connection,
-                                     databaseSchema = cohortDatabaseSchema) %>%
+                                     databaseSchema = cohortDatabaseSchema) |>
     tolower()
   
   cohortTableName <- tolower(cohortTableName)
@@ -242,29 +242,29 @@ executeCohortPathways <- function(connectionDetails = NULL,
     cohort_table = cohortTableName,
     cohort_ids = c(targetCohortIds, eventCohortIds),
     snakeCaseToCamelCase = TRUE
-  ) %>%
+  ) |>
     dplyr::tibble()
   
-  if (nrow(cohortCounts) < length(c(targetCohortIds, eventCohortIds) %>% unique())) {
+  if (nrow(cohortCounts) < length(c(targetCohortIds, eventCohortIds) |> unique())) {
     message("Not all cohorts have more than 0 records.")
     
-    if (nrow(cohortCounts %>% dplyr::filter(.data$cohortId %in% c(targetCohortIds))) == 0) {
+    if (nrow(cohortCounts |> dplyr::filter(.data$cohortId %in% c(targetCohortIds))) == 0) {
       stop("None of the target cohorts are instantiated.")
     }
     
-    if (nrow(cohortCounts %>% dplyr::filter(.data$cohortId %in% c(eventCohortIds))) == 0) {
+    if (nrow(cohortCounts |> dplyr::filter(.data$cohortId %in% c(eventCohortIds))) == 0) {
       stop("None of the event cohorts are instantiated.")
     }
     
     message(
       sprintf(
         "    Found %s of %s (%1.2f%%) target cohorts instantiated. ",
-        nrow(cohortCounts %>% dplyr::filter(
+        nrow(cohortCounts |> dplyr::filter(
           .data$cohortId %in% c(targetCohortIds)
         )),
         length(targetCohortIds),
         100 * (
-          nrow(cohortCounts %>% dplyr::filter(
+          nrow(cohortCounts |> dplyr::filter(
             .data$cohortId %in% c(targetCohortIds)
           )) / length(targetCohortIds)
         )
@@ -273,12 +273,12 @@ executeCohortPathways <- function(connectionDetails = NULL,
     message(
       sprintf(
         "    Found %s of %s (%1.2f%%) event cohorts instantiated. ",
-        nrow(cohortCounts %>% dplyr::filter(
+        nrow(cohortCounts |> dplyr::filter(
           .data$cohortId %in% c(eventCohortIds)
         )),
         length(eventCohortIds),
         100 * (
-          nrow(cohortCounts %>% dplyr::filter(
+          nrow(cohortCounts |> dplyr::filter(
             .data$cohortId %in% c(eventCohortIds)
           )) / length(eventCohortIds)
         )
@@ -452,8 +452,8 @@ executeCohortPathways <- function(connectionDetails = NULL,
   
   generationIds <- c()
   eventCohortIdIndexMaps <-
-    dplyr::tibble(eventCohortId = instantiatedEventCohortIds %>% unique()) %>%
-    dplyr::arrange(.data$eventCohortId) %>%
+    dplyr::tibble("eventCohortId" = instantiatedEventCohortIds |> unique()) |>
+    dplyr::arrange(.data$eventCohortId) |>
     dplyr::mutate(cohortIndex = dplyr::row_number())
   
   pathwaysAnalysisPathsSql <-
@@ -475,8 +475,8 @@ executeCohortPathways <- function(connectionDetails = NULL,
              size = 1,
              replace = FALSE)
     
-    eventCohortIdIndexMap <- eventCohortIdIndexMaps %>%
-      dplyr::rowwise() %>%
+    eventCohortIdIndexMap <- eventCohortIdIndexMaps |>
+      dplyr::rowwise() |>
       dplyr::mutate(
         sql = paste0(
           "SELECT ",
@@ -485,8 +485,8 @@ executeCohortPathways <- function(connectionDetails = NULL,
           .data$cohortIndex,
           " AS cohort_index"
         )
-      ) %>%
-      dplyr::pull(.data$sql) %>%
+      ) |>
+      dplyr::pull(.data$sql) |>
       paste0(collapse = " union all ")
     
     message(
@@ -542,7 +542,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       pathway_analysis_stats = pathwayAnalysisStats,
       target_cohort_id = instantiatedTargetCohortIds,
       pathways_analysis_generation_ids = generationIds
-    ) %>%
+    ) |>
     dplyr::tibble()
   
   pathwaysAnalysisPathsData <-
@@ -555,102 +555,102 @@ executeCohortPathways <- function(connectionDetails = NULL,
       pathway_analysis_paths = pathwayAnalysisPaths,
       target_cohort_id = instantiatedTargetCohortIds,
       pathways_analysis_generation_ids = generationIds
-    ) %>%
+    ) |>
     dplyr::tibble()
   
-  pathwaycomboIds <- pathwaysAnalysisPathsData %>%
-    dplyr::select(dplyr::starts_with("step")) %>%
+  pathwaycomboIds <- pathwaysAnalysisPathsData |>
+    dplyr::select(dplyr::starts_with("step")) |>
     tidyr::pivot_longer(
       cols = dplyr::starts_with("step"),
       names_to = "names",
       values_to = "comboIds"
-    ) %>%
-    dplyr::select(.data$comboIds) %>%
-    dplyr::distinct() %>%
-    dplyr::filter(.data$comboIds > 0) %>%
-    dplyr::select(.data$comboIds) %>%
+    ) |>
+    dplyr::select(comboIds) |>
+    dplyr::distinct() |>
+    dplyr::filter(.data$comboIds > 0) |>
+    dplyr::select(comboIds) |> 
     dplyr::arrange(.data$comboIds)
   
   pathwayAnalysisCodesLong <- c()
   for (i in (1:nrow(pathwaycomboIds))) {
     cohortIndex <- extractBitSum(x = pathwaycomboIds[i,]$comboIds)
-    combisData <- dplyr::tibble(cohortIndex = cohortIndex) %>%
-      dplyr::mutate(comboId = pathwaycomboIds[i,]$comboIds) %>%
-      dplyr::mutate(targetCohortId = targetCohortId) %>%
+    combisData <- dplyr::tibble(cohortIndex = cohortIndex) |>
+      dplyr::mutate(comboId = pathwaycomboIds[i,]$comboIds) |>
+      dplyr::mutate(targetCohortId = targetCohortId) |>
       dplyr::inner_join(eventCohortIdIndexMaps,
-                        by = "cohortIndex") %>%
+                        by = "cohortIndex") |>
       dplyr::inner_join(cohortDefinitionSet,
-                        by = c("eventCohortId" = "cohortId")) %>%
+                        by = c("eventCohortId" = "cohortId")) |>
       dplyr::rename(eventCohortName = .data$cohortName)
     
     pathwayAnalysisCodesLong <- dplyr::bind_rows(combisData,
                                                  pathwayAnalysisCodesLong)
   }
   
-  isCombo <- pathwayAnalysisCodesLong %>%
-    dplyr::select(.data$targetCohortId,
-                  .data$comboId,
-                  .data$eventCohortId) %>%
-    dplyr::distinct() %>%
-    dplyr::group_by(.data$targetCohortId, .data$comboId) %>%
-    dplyr::summarise(numberOfEvents = dplyr::n()) %>%
+  isCombo <- pathwayAnalysisCodesLong |>
+    dplyr::select(targetCohortId,
+                  comboId,
+                  eventCohortId) |>
+    dplyr::distinct() |>
+    dplyr::group_by(.data$targetCohortId, .data$comboId) |>
+    dplyr::summarise(numberOfEvents = dplyr::n()) |>
     dplyr::mutate(isCombo = dplyr::case_when(.data$numberOfEvents > 1 ~ 1, TRUE ~
                                                0))
   
-  pathwayAnalysisCodesLong <- pathwayAnalysisCodesLong %>%
+  pathwayAnalysisCodesLong <- pathwayAnalysisCodesLong |>
     dplyr::inner_join(isCombo,
-                      by = c("targetCohortId", "comboId")) %>%
-    tidyr::crossing(dplyr::tibble(pathwayAnalysisGenerationId = generationIds)) %>%
+                      by = c("targetCohortId", "comboId")) |>
+    tidyr::crossing(dplyr::tibble("pathwayAnalysisGenerationId" = generationIds)) |>
     dplyr::select(
-      .data$pathwayAnalysisGenerationId,
-      .data$comboId,
-      .data$targetCohortId,
-      .data$eventCohortId,
-      .data$eventCohortName,
-      .data$isCombo,
-      .data$numberOfEvents
-    ) %>%
-    dplyr::rename("code" = .data$comboId)
+      pathwayAnalysisGenerationId,
+      comboId,
+      targetCohortId,
+      eventCohortId,
+      eventCohortName,
+      isCombo,
+      numberOfEvents
+    ) |>
+    dplyr::rename("code" = comboId)
   
-  pathwayAnalysisCodesData <- pathwayAnalysisCodesLong %>%
+  pathwayAnalysisCodesData <- pathwayAnalysisCodesLong |>
     dplyr::select(
-      .data$pathwayAnalysisGenerationId,
-      .data$code,
-      .data$eventCohortName,
-      .data$isCombo
-    ) %>%
+      pathwayAnalysisGenerationId,
+      code,
+      eventCohortName,
+      isCombo
+    ) |>
     dplyr::group_by(.data$pathwayAnalysisGenerationId,
                     .data$code,
-                    .data$isCombo) %>%
-    dplyr::mutate(name = paste0(.data$eventCohortName, collapse = " + ")) %>%
-    dplyr::select(.data$pathwayAnalysisGenerationId,
-                  .data$code,
-                  .data$name,
-                  .data$isCombo)
+                    .data$isCombo) |>
+    dplyr::mutate(name = paste0(.data$eventCohortName, collapse = " + ")) |>
+    dplyr::select(pathwayAnalysisGenerationId,
+                  code,
+                  name,
+                  isCombo)
   
   readr::write_excel_csv(
-    x = pathwayAnalysisStatsData %>% SqlRender::camelCaseToSnakeCaseNames(),
+    x = pathwayAnalysisStatsData |> SqlRender::camelCaseToSnakeCaseNames(),
     file = file.path(exportFolder, "pathwayAnalysisStats.csv"),
     na = "",
     append = FALSE
   )
   
   readr::write_excel_csv(
-    x = pathwaysAnalysisPathsData %>% SqlRender::camelCaseToSnakeCaseNames(),
+    x = pathwaysAnalysisPathsData |> SqlRender::camelCaseToSnakeCaseNames(),
     file = file.path(exportFolder, "pathwaysAnalysisPaths.csv"),
     na = "",
     append = FALSE
   )
   
   readr::write_excel_csv(
-    x = pathwayAnalysisCodesData %>% SqlRender::camelCaseToSnakeCaseNames(),
+    x = pathwayAnalysisCodesData |> SqlRender::camelCaseToSnakeCaseNames(),
     file = file.path(exportFolder, "pathwayAnalysisCodes.csv"),
     na = "",
     append = FALSE
   )
   
   readr::write_excel_csv(
-    x = pathwayAnalysisCodesLong %>% SqlRender::camelCaseToSnakeCaseNames(),
+    x = pathwayAnalysisCodesLong |> SqlRender::camelCaseToSnakeCaseNames(),
     file = file.path(exportFolder, "pathwayAnalysisCodesLong.csv"),
     na = "",
     append = FALSE
