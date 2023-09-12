@@ -27,12 +27,9 @@ devtools::check()
 unlink("extras/CohortPathways.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortPathways.pdf")
 
-# Create Vignettes---------------------------------------------------------
-
 # Build site---------------------------------------------------------
 pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
-
 
 # Release package to CRAN ------------------------------------------------------
 devtools::check_win_devel()
