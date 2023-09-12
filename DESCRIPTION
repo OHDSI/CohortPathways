@@ -1,0 +1,34 @@
+Package: CohortPathways
+Type: Package
+Title: Create Pathways from Target to Event Cohorts
+Version: 0.0.1
+Date: 2023-09-11
+Authors@R: c(
+    person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
+    person("Observational Health Data Science and Informatics", role = c("cph"))
+  )
+Maintainer: Gowtham Rao <rao@ohdsi.org>
+Description: This software tool is designed to compute the temporal relationship defined as pathways
+    between any two instantiated cohorts. The cohorts are input as Target and event cohorts.
+Depends:
+	DatabaseConnector (>= 5.0.0),
+	R (>= 4.1.0)
+Imports:
+    checkmate,
+    dplyr,
+    lifecycle,
+    readr,
+    rlang,
+    SqlRender,
+    tidyr
+Suggests:
+  remotes,
+	testthat,
+	withr
+License: Apache License
+RoxygenNote: 7.2.3
+Roxygen: list(markdown = TRUE)
+Encoding: UTF-8
+Language: en-US
+URL: https://github.com/OHDSI/CohortPathways
+BugReports: https://github.com/OHDSI/CohortPathways/issues
