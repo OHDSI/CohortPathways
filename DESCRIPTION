@@ -17,7 +17,6 @@ Imports:
     checkmate,
     dplyr,
     lifecycle,
-    readr,
     rlang,
     SqlRender,
     tidyr

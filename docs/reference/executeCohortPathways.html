@@ -63,17 +63,13 @@ Assumes the cohorts have already been instantiated.</p>
 <span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">cohortDatabaseSchema</span>,</span>
 <span>  cohortTableName <span class="op">=</span> <span class="st">"cohort"</span>,</span>
-<span>  targetDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tempEmulationSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sqlRenderTempEmulationSchema"</span><span class="op">)</span>,</span>
 <span>  <span class="va">targetCohortIds</span>,</span>
 <span>  <span class="va">eventCohortIds</span>,</span>
-<span>  <span class="va">cohortDefinitionSet</span>,</span>
-<span>  <span class="va">exportFolder</span>,</span>
 <span>  minCellCount <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  allowRepeats <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  maxDepth <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  collapseWindow <span class="op">=</span> <span class="fl">30</span>,</span>
-<span>  overwrite <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  collapseWindow <span class="op">=</span> <span class="fl">30</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -104,14 +100,6 @@ this should include both the database and schema name, for example
 <dd><p>The name of the cohort table.</p></dd>
 
 
-<dt>targetDatabaseSchema</dt>
-<dd><p>(Optional) Schema name where output pathway tables would reside. This is also known as
-as resultsDatabaseSChema. If not specified, scratch schema will be used. The output may not
-persist in the database after disconnection. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.</p></dd>
-
-
 <dt>tempEmulationSchema</dt>
 <dd><p>Some database platforms like Oracle and Impala do not truly support
 temp tables. To emulate temp tables, provide a schema with write
@@ -124,16 +112,6 @@ privileges where temp tables can be created.</p></dd>
 
 <dt>eventCohortIds</dt>
 <dd><p>A vector of one or more Cohort Ids corresponding to event cohort (s).</p></dd>
-
-
-<dt>cohortDefinitionSet</dt>
-<dd><p>A data frame object with minimum two columns, cohortId and in
-targetCohortId and eventCohortId. This is the source of cohort names.</p></dd>
-
-
-<dt>exportFolder</dt>
-<dd><p>The folder where the output will be exported to. If this folder
-does not exist it will be created.</p></dd>
 
 
 <dt>minCellCount</dt>
@@ -153,16 +131,14 @@ does not exist it will be created.</p></dd>
 be reassigned the earliest date. Collapsing dates reduces pathway
 variation, leading to a reduction in 'noise' in the result.</p></dd>
 
-
-<dt>overwrite</dt>
-<dd><p>(Default = TRUE) Do you want to overwrite results?</p></dd>
-
 </dl></div>
     <div id="value">
     <h2>Value</h2>
     
 
-<p>Nothing is returned</p>
+<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>                 An array of Data Frame objects.</span></code></pre><p></p></div>
+
+
     </div>
 
     <div id="ref-examples">
@@ -179,7 +155,6 @@ variation, leading to a reduction in 'noise' in the result.</p></dd>
 <span class="r-in"><span><span class="fu">executeCohortPathways</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,</span></span>
 <span class="r-in"><span>  cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span></span>
-<span class="r-in"><span>  exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span></span>
 <span class="r-in"><span>  cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>

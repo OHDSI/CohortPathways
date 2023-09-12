@@ -78,11 +78,13 @@ executeCohortPathways <- function(connectionDetails = NULL,
                                   collapseWindow = 30) {
   start <- Sys.time()
   message(paste0("Run Cohort Pathways started at ", start))
-  
+
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertCharacter(x = cohortDatabaseSchema,
-                             min.len = 1,
-                             add = errorMessage)
+  checkmate::assertCharacter(
+    x = cohortDatabaseSchema,
+    min.len = 1,
+    add = errorMessage
+  )
   checkmate::assertDouble(
     x = minCellCount,
     lower = 0,
@@ -108,25 +110,27 @@ executeCohortPathways <- function(connectionDetails = NULL,
     add = errorMessage
   )
   checkmate::reportAssertions(collection = errorMessage)
-  
+
   # allow repeats is used as text 'true' or 'false' in sql
   if (allowRepeats) {
     allowRepeats <- "true"
   } else {
     allowRepeats <- "false"
   }
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   # perform checks on cohort database schema.
   tablesInCohortDatabaseSchema <-
-    DatabaseConnector::getTableNames(connection = connection,
-                                     databaseSchema = cohortDatabaseSchema) |>
+    DatabaseConnector::getTableNames(
+      connection = connection,
+      databaseSchema = cohortDatabaseSchema
+    ) |>
     tolower()
-  
+
   cohortTableName <- tolower(cohortTableName)
   if (!cohortTableName %in% c(tablesInCohortDatabaseSchema, "")) {
     stop(
@@ -139,7 +143,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       )
     )
   }
-  
+
   cohortCounts <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT cohort_definition_id AS cohort_id,
@@ -154,18 +158,18 @@ executeCohortPathways <- function(connectionDetails = NULL,
     snakeCaseToCamelCase = TRUE
   ) |>
     dplyr::tibble()
-  
+
   if (nrow(cohortCounts) < length(c(targetCohortIds, eventCohortIds) |> unique())) {
     message("Not all cohorts have more than 0 records.")
-    
+
     if (nrow(cohortCounts |> dplyr::filter(.data$cohortId %in% c(targetCohortIds))) == 0) {
       stop("None of the target cohorts are instantiated.")
     }
-    
+
     if (nrow(cohortCounts |> dplyr::filter(.data$cohortId %in% c(eventCohortIds))) == 0) {
       stop("None of the event cohorts are instantiated.")
     }
-    
+
     message(
       sprintf(
         "    Found %s of %s (%1.2f%%) target cohorts instantiated. ",
@@ -195,15 +199,15 @@ executeCohortPathways <- function(connectionDetails = NULL,
       )
     )
   }
-  
+
   targetCohortTable <-
     paste0(cohortDatabaseSchema, ".", cohortTableName)
-  
+
   instantiatedEventCohortIds <-
     intersect(x = eventCohortIds, y = cohortCounts$cohortId)
   instantiatedTargetCohortIds <-
     intersect(x = targetCohortIds, y = cohortCounts$cohortId)
-  
+
   pathwayAnalysisSql <-
     SqlRender::readSql(
       sourceFile = system.file(
@@ -213,26 +217,28 @@ executeCohortPathways <- function(connectionDetails = NULL,
         package = utils::packageName()
       )
     )
-  
+
   generationIds <- c()
   eventCohortIdIndexMaps <-
     dplyr::tibble("eventCohortId" = instantiatedEventCohortIds |> unique()) |>
     dplyr::arrange(.data$eventCohortId) |>
     dplyr::mutate(cohortIndex = dplyr::row_number())
-  
+
   pathwayAnalysisStatsData <- c()
   pathwaysAnalysisPathsData <- c()
   pathwaysAnalysisEventsData <- c()
-  
+
   for (i in (1:length(instantiatedTargetCohortIds))) {
     targetCohortId <- instantiatedTargetCohortIds[[i]]
-    
+
     generationId <-
       (as.integer(format(Sys.Date(), "%Y%m%d")) * 1000) +
-      sample(x = 1:1000,
-             size = 1,
-             replace = FALSE)
-    
+      sample(
+        x = 1:1000,
+        size = 1,
+        replace = FALSE
+      )
+
     eventCohortIdIndexMap <- eventCohortIdIndexMaps |>
       dplyr::rowwise() |>
       dplyr::mutate(
@@ -246,7 +252,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       ) |>
       dplyr::pull(.data$sql) |>
       paste0(collapse = " union all ")
-    
+
     message(
       paste0(
         "   Generating Cohort Pathways for target cohort: ",
@@ -256,7 +262,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
         "."
       )
     )
-    
+
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = pathwayAnalysisSql,
@@ -272,7 +278,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       generation_id = generationId,
       event_cohort_id_index_map = eventCohortIdIndexMap
     )
-    
+
     pathwayAnalysisStatsData[[i]] <-
       DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
@@ -280,7 +286,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
         snakeCaseToCamelCase = TRUE
       ) |>
       dplyr::tibble()
-    
+
     pathwaysAnalysisPathsData[[i]] <-
       DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
@@ -288,7 +294,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
         snakeCaseToCamelCase = TRUE
       ) |>
       dplyr::tibble()
-    
+
     pathwaysAnalysisEventsData[[i]] <-
       DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
@@ -296,7 +302,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
         snakeCaseToCamelCase = TRUE
       ) |>
       dplyr::tibble()
-    
+
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = " DROP TABLE IF EXISTS #pa_paths;
@@ -307,17 +313,17 @@ executeCohortPathways <- function(connectionDetails = NULL,
       reportOverallTime = FALSE,
       tempEmulationSchema = tempEmulationSchema
     )
-    
+
     generationIds <- c(generationId, generationIds)
   }
-  
+
   pathwayAnalysisStatsData <-
     dplyr::bind_rows(pathwayAnalysisStatsData)
   pathwaysAnalysisPathsData <-
     dplyr::bind_rows(pathwaysAnalysisPathsData)
   pathwaysAnalysisEventsData <-
     dplyr::bind_rows(pathwaysAnalysisEventsData)
-  
+
   pathwaycomboIds <- pathwaysAnalysisPathsData |>
     dplyr::select(dplyr::starts_with("step")) |>
     tidyr::pivot_longer(
@@ -330,32 +336,38 @@ executeCohortPathways <- function(connectionDetails = NULL,
     dplyr::filter(.data$comboIds > 0) |>
     dplyr::select("comboIds") |>
     dplyr::arrange(.data$comboIds)
-  
+
   pathwayAnalysisCodesLong <- c()
   for (i in (1:nrow(pathwaycomboIds))) {
-    cohortIndex <- extractBitSum(x = pathwaycomboIds[i,]$comboIds)
+    cohortIndex <- extractBitSum(x = pathwaycomboIds[i, ]$comboIds)
     combisData <- dplyr::tibble("cohortIndex" = cohortIndex) |>
-      dplyr::mutate("comboId" = pathwaycomboIds[i,]$comboIds) |>
+      dplyr::mutate("comboId" = pathwaycomboIds[i, ]$comboIds) |>
       dplyr::mutate("targetCohortId" = targetCohortId) |>
       dplyr::inner_join(eventCohortIdIndexMaps,
-                        by = "cohortIndex")
-    pathwayAnalysisCodesLong <- dplyr::bind_rows(combisData,
-                                                 pathwayAnalysisCodesLong)
+        by = "cohortIndex"
+      )
+    pathwayAnalysisCodesLong <- dplyr::bind_rows(
+      combisData,
+      pathwayAnalysisCodesLong
+    )
   }
-  
+
   isCombo <- pathwayAnalysisCodesLong |>
-    dplyr::select("targetCohortId",
-                  "comboId",
-                  "eventCohortId") |>
+    dplyr::select(
+      "targetCohortId",
+      "comboId",
+      "eventCohortId"
+    ) |>
     dplyr::distinct() |>
     dplyr::group_by(.data$targetCohortId, .data$comboId) |>
     dplyr::summarise(numberOfEvents = dplyr::n()) |>
     dplyr::mutate(isCombo = dplyr::case_when(.data$numberOfEvents > 1 ~ 1, TRUE ~
-                                               0))
-  
+      0))
+
   pathwayAnalysisCodesLong <- pathwayAnalysisCodesLong |>
     dplyr::inner_join(isCombo,
-                      by = c("targetCohortId", "comboId")) |>
+      by = c("targetCohortId", "comboId")
+    ) |>
     tidyr::crossing(dplyr::tibble("pathwayAnalysisGenerationId" = generationIds)) |>
     dplyr::select(
       "pathwayAnalysisGenerationId",
@@ -366,18 +378,24 @@ executeCohortPathways <- function(connectionDetails = NULL,
       "numberOfEvents"
     ) |>
     dplyr::rename("code" = "comboId")
-  
+
   pathwayAnalysisCodesData <- pathwayAnalysisCodesLong |>
-    dplyr::select("pathwayAnalysisGenerationId",
-                  "code",
-                  "isCombo") |>
-    dplyr::group_by(.data$pathwayAnalysisGenerationId,
-                    .data$code,
-                    .data$isCombo) |>
-    dplyr::select("pathwayAnalysisGenerationId",
-                  "code",
-                  "isCombo")
-  
+    dplyr::select(
+      "pathwayAnalysisGenerationId",
+      "code",
+      "isCombo"
+    ) |>
+    dplyr::group_by(
+      .data$pathwayAnalysisGenerationId,
+      .data$code,
+      .data$isCombo
+    ) |>
+    dplyr::select(
+      "pathwayAnalysisGenerationId",
+      "code",
+      "isCombo"
+    )
+
   allData <- c()
   allData$pathwayAnalysisStatsData <- pathwayAnalysisStatsData
   allData$pathwaysAnalysisPathsData <- pathwaysAnalysisPathsData
@@ -386,12 +404,14 @@ executeCohortPathways <- function(connectionDetails = NULL,
   allData$pathwayAnalysisCodesLong <- pathwayAnalysisCodesLong
   allData$isCombo <- isCombo
   allData$pathwayAnalysisCodesData <- pathwayAnalysisCodesData
-  
+
   delta <- Sys.time() - start
-  
-  message("Computing Cohort Pathways took ",
-          signif(delta, 3),
-          " ",
-          attr(delta, "units"))
+
+  message(
+    "Computing Cohort Pathways took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
   return(allData)
 }
