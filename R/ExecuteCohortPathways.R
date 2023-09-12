@@ -587,18 +587,18 @@ executeCohortPathways <- function(connectionDetails = NULL,
       names_to = "names",
       values_to = "comboIds"
     ) |>
-    dplyr::select(.data$comboIds) |>
+    dplyr::select("comboIds") |>
     dplyr::distinct() |>
     dplyr::filter(.data$comboIds > 0) |>
-    dplyr::select(.data$comboIds) |>
+    dplyr::select("comboIds") |>
     dplyr::arrange(.data$comboIds)
 
   pathwayAnalysisCodesLong <- c()
   for (i in (1:nrow(pathwaycomboIds))) {
     cohortIndex <- extractBitSum(x = pathwaycomboIds[i, ]$comboIds)
-    combisData <- dplyr::tibble(cohortIndex = cohortIndex) |>
+    combisData <- dplyr::tibble("cohortIndex" = cohortIndex) |>
       dplyr::mutate("comboId" = pathwaycomboIds[i, ]$comboIds) |>
-      dplyr::mutate(targetCohortId = targetCohortId) |>
+      dplyr::mutate("targetCohortId" = "targetCohortId") |>
       dplyr::inner_join(eventCohortIdIndexMaps,
         by = "cohortIndex"
       ) |>
@@ -615,9 +615,9 @@ executeCohortPathways <- function(connectionDetails = NULL,
 
   isCombo <- pathwayAnalysisCodesLong |>
     dplyr::select(
-      .data$targetCohortId,
-      .data$comboId,
-      .data$eventCohortId
+      "targetCohortId",
+      "comboId",
+      "eventCohortId"
     ) |>
     dplyr::distinct() |>
     dplyr::group_by(.data$targetCohortId, .data$comboId) |>
@@ -631,22 +631,22 @@ executeCohortPathways <- function(connectionDetails = NULL,
     ) |>
     tidyr::crossing(dplyr::tibble("pathwayAnalysisGenerationId" = generationIds)) |>
     dplyr::select(
-      .data$pathwayAnalysisGenerationId,
-      .data$comboId,
-      .data$targetCohortId,
-      .data$eventCohortId,
-      .data$eventCohortName,
-      .data$isCombo,
-      .data$numberOfEvents
+      "pathwayAnalysisGenerationId",
+      "comboId",
+      "targetCohortId",
+      "eventCohortId",
+      "eventCohortName",
+      "isCombo",
+      "numberOfEvents"
     ) |>
     dplyr::rename("code" = "comboId")
 
   pathwayAnalysisCodesData <- pathwayAnalysisCodesLong |>
     dplyr::select(
-      .data$pathwayAnalysisGenerationId,
-      .data$code,
-      .data$eventCohortName,
-      .data$isCombo
+      "pathwayAnalysisGenerationId",
+      "code",
+      "eventCohortName",
+      "isCombo"
     ) |>
     dplyr::group_by(
       .data$pathwayAnalysisGenerationId,
@@ -655,10 +655,10 @@ executeCohortPathways <- function(connectionDetails = NULL,
     ) |>
     dplyr::mutate(name = paste0(.data$eventCohortName, collapse = " + ")) |>
     dplyr::select(
-      .data$pathwayAnalysisGenerationId,
-      .data$code,
-      .data$name,
-      isCombo
+      "pathwayAnalysisGenerationId",
+      "code",
+      "name",
+      "isCombo"
     )
 
   readr::write_excel_csv(
