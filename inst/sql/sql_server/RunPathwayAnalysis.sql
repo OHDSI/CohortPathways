@@ -1,6 +1,14 @@
-DELETE
-FROM @pathway_analysis_events
-WHERE pathway_analysis_generation_id = @generation_id AND target_cohort_id = @pathway_target_cohort_id;
+DROP TABLE IF EXISTS {@combo_window != 0 }?{ #raw_events }:{#event_cohort_eras};
+DROP TABLE IF EXISTS #date_replacements;
+DROP TABLE IF EXISTS #coll_dates_events;
+DROP TABLE IF EXISTS #non_rep_events;
+DROP TABLE IF EXISTS #combo_events;
+DROP TABLE IF EXISTS #event_cohort_eras;
+DROP TABLE IF EXISTS #raw_events;
+
+DROP TABLE IF EXISTS #pa_paths;
+DROP TABLE IF EXISTS #pa_stats;
+DROP TABLE IF EXISTS #pa_events;
 
 /*
 * Filter out events which do not fall into a person's target period
@@ -22,6 +30,7 @@ FROM (
 ) RE;
 
 {@combo_window != 0 }?{-- Begin Collapse Events
+
 /*
 * Find closely located dates, which need to be collapsed, based on combo_window
 */
@@ -54,7 +63,6 @@ WHERE cohort_date <> replacement_date;
 /*
 * Collapse dates
 */
-
 SELECT
   e.subject_id,
   e.event_cohort_index,
@@ -81,6 +89,7 @@ FROM (
 
 -- we need to era-fy the collapsed dates because collapsing leads to overlapping.
 
+DROP TABLE IF EXISTS #event_cohort_eras;
 with cteEndDates (SUBJECT_ID, EVENT_COHORT_INDEX, END_DATE) as -- the magic: identify the end of eras, paritioned by the GAP_GROUP and the person_id
 (
 	select SUBJECT_ID, EVENT_COHORT_INDEX, EVENT_DATE as END_DATE -- unpad the end date
@@ -128,14 +137,6 @@ select SUBJECT_ID, EVENT_COHORT_INDEX, COHORT_START_DATE, COHORT_END_DATE
 INTO #event_cohort_eras
 from cteFinalEras;
 
-TRUNCATE TABLE #coll_dates_events;
-DROP TABLE #coll_dates_events;
-
-TRUNCATE TABLE #date_replacements;
-DROP TABLE #date_replacements;
-
-TRUNCATE TABLE #raw_events;
-DROP TABLE #raw_events;
 
 -- End Collapse Events
 }
@@ -212,7 +213,7 @@ WHERE repetitive_event = 0 {@allow_repeats == 'false'}?{ AND is_repeat = 0 };
 * Persist results
 */
 
-INSERT INTO @pathway_analysis_events (pathway_analysis_generation_id, target_cohort_id, subject_id, ordinal, combo_id, cohort_start_date, cohort_end_date)
+
 SELECT
   @generation_id as pathway_analysis_generation_id,
   @pathway_target_cohort_id as target_cohort_id,
@@ -221,15 +222,16 @@ SELECT
   combo_id,
   cohort_start_date,
   cohort_end_date
+INTO #pa_events
 FROM #non_rep_events
 WHERE 1 = 1 {@max_depth != ''}?{ AND ordinal <= @max_depth };
 
-INSERT INTO @pathway_analysis_stats (pathway_analysis_generation_id, target_cohort_id, target_cohort_count, pathways_count)
 SELECT
   @generation_id as pathway_analysis_generation_id,
   CAST(@pathway_target_cohort_id AS INT) AS target_cohort_id,
   CAST(target_count.cnt AS BIGINT) AS target_cohort_count,
   CAST(pathway_count.cnt AS BIGINT) AS pathways_count
+INTO #pa_stats
 FROM (
   SELECT CAST(COUNT_BIG(*) as BIGINT) cnt
   FROM @target_cohort_table
@@ -237,16 +239,42 @@ FROM (
 ) target_count,
 (
   SELECT CAST(COUNT_BIG(DISTINCT subject_id) as BIGINT) cnt
-  FROM @pathway_analysis_events
+  FROM #pa_events
   WHERE pathway_analysis_generation_id = @generation_id
   AND target_cohort_id = @pathway_target_cohort_id
 ) pathway_count;
 
-TRUNCATE TABLE #non_rep_events;
-DROP TABLE #non_rep_events;
 
-TRUNCATE TABLE #combo_events;
-DROP TABLE #combo_events;
+select pathway_analysis_generation_id, target_cohort_id,
+	step_1, step_2, step_3, step_4, step_5, step_6, step_7, step_8, step_9, step_10,
+  count_big(subject_id) as count_value
+INTO #pa_paths
+from
+(
+  select e.pathway_analysis_generation_id, e.target_cohort_id, e.subject_id,
+    MAX(case when ordinal = 1 then combo_id end) as step_1,
+    MAX(case when ordinal = 2 then combo_id end) as step_2,
+    MAX(case when ordinal = 3 then combo_id end) as step_3,
+    MAX(case when ordinal = 4 then combo_id end) as step_4,
+    MAX(case when ordinal = 5 then combo_id end) as step_5,
+    MAX(case when ordinal = 6 then combo_id end) as step_6,
+    MAX(case when ordinal = 7 then combo_id end) as step_7,
+    MAX(case when ordinal = 8 then combo_id end) as step_8,
+    MAX(case when ordinal = 9 then combo_id end) as step_9,
+    MAX(case when ordinal = 10 then combo_id end) as step_10
+  from #pa_events e
+  WHERE e.pathway_analysis_generation_id = @generation_id
+	GROUP BY e.pathway_analysis_generation_id, e.target_cohort_id, e.subject_id
+) t1
+group by pathway_analysis_generation_id, target_cohort_id, 
+	step_1, step_2, step_3, step_4, step_5, step_6, step_7, step_8, step_9, step_10
+;
 
-TRUNCATE TABLE #event_cohort_eras;
-DROP TABLE #event_cohort_eras;
+
+DROP TABLE IF EXISTS {@combo_window != 0 }?{ #raw_events }:{#event_cohort_eras};
+DROP TABLE IF EXISTS #date_replacements;
+DROP TABLE IF EXISTS #coll_dates_events;
+DROP TABLE IF EXISTS #non_rep_events;
+DROP TABLE IF EXISTS #combo_events;
+DROP TABLE IF EXISTS #event_cohort_eras;
+DROP TABLE IF EXISTS #raw_events;

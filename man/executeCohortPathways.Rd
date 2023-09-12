@@ -9,17 +9,13 @@ executeCohortPathways(
   connection = NULL,
   cohortDatabaseSchema,
   cohortTableName = "cohort",
-  targetDatabaseSchema = NULL,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   targetCohortIds,
   eventCohortIds,
-  cohortDefinitionSet,
-  exportFolder,
   minCellCount = 5,
   allowRepeats = FALSE,
   maxDepth = 5,
-  collapseWindow = 30,
-  overwrite = TRUE
+  collapseWindow = 30
 )
 }
 \arguments{
@@ -40,12 +36,6 @@ this should include both the database and schema name, for example
 
 \item{cohortTableName}{The name of the cohort table.}
 
-\item{targetDatabaseSchema}{(Optional) Schema name where output pathway tables would reside. This is also known as
-as resultsDatabaseSChema. If not specified, scratch schema will be used. The output may not
-persist in the database after disconnection. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.}
-
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support
 temp tables. To emulate temp tables, provide a schema with write
 privileges where temp tables can be created.}
@@ -53,12 +43,6 @@ privileges where temp tables can be created.}
 \item{targetCohortIds}{A vector of one or more Cohort Ids corresponding to target cohort (s).}
 
 \item{eventCohortIds}{A vector of one or more Cohort Ids corresponding to event cohort (s).}
-
-\item{cohortDefinitionSet}{A data frame object with minimum two columns, cohortId and in
-targetCohortId and eventCohortId. This is the source of cohort names.}
-
-\item{exportFolder}{The folder where the output will be exported to. If this folder
-does not exist it will be created.}
 
 \item{minCellCount}{(Default = 5) The minimum cell count for fields contains person counts or fractions.}
 
@@ -69,11 +53,10 @@ does not exist it will be created.}
 \item{collapseWindow}{(Default = 30) Any dates found within the specified collapse days will
 be reassigned the earliest date. Collapsing dates reduces pathway
 variation, leading to a reduction in 'noise' in the result.}
-
-\item{overwrite}{(Default = TRUE) Do you want to overwrite results?}
 }
 \value{
-Nothing is returned
+\if{html}{\out{<div class="sourceCode">}}\preformatted{                 An array of Data Frame objects.
+}\if{html}{\out{</div>}}
 }
 \description{
 Runs the cohort pathways on all instantiated combinations of target and event cohorts.
@@ -92,7 +75,6 @@ connectionDetails <- createConnectionDetails(
 executeCohortPathways(
   connectionDetails = connectionDetails,
   cohorts = cohorts,
-  exportFolder = "export",
   cohortDatabaseSchema = "results"
 )
 }

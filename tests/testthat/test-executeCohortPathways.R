@@ -1,11 +1,6 @@
 testthat::test_that("Execute Cohort Pathways", {
   testthat::skip_if(condition = skipCdmTests)
-
-  cohortDefinitionSet <- dplyr::tibble(
-    cohortId = c(1, 2, 10, 20),
-    cohortName = c("A", "B", "C", "D")
-  )
-
+  
   # make up date for a cohort table
   targetCohort <- dplyr::tibble(
     cohortDefinitionId = c(1, 1, 2),
@@ -21,7 +16,7 @@ testthat::test_that("Execute Cohort Pathways", {
       as.Date("1999-03-31")
     )
   )
-
+  
   eventCohort <- dplyr::tibble(
     cohortDefinitionId = c(10, 10, 20),
     subjectId = c(1, 1, 1),
@@ -36,7 +31,7 @@ testthat::test_that("Execute Cohort Pathways", {
       as.Date("1999-04-20")
     )
   )
-
+  
   # upload table
   connection <-
     DatabaseConnector::connect(connectionDetails = connectionDetails)
@@ -51,7 +46,7 @@ testthat::test_that("Execute Cohort Pathways", {
     camelCaseToSnakeCase = TRUE,
     progressBar = FALSE
   )
-
+  
   dataInserted <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
@@ -64,88 +59,44 @@ testthat::test_that("Execute Cohort Pathways", {
       snakeCaseToCamelCase = TRUE
     ) |>
     dplyr::tibble()
-
+  
   testthat::expect_equal(
     object = dataInserted |>
       nrow(),
-    expected = nrow(dplyr::bind_rows(targetCohort, eventCohort) |> dplyr::distinct())
+    expected = nrow(
+      dplyr::bind_rows(targetCohort, eventCohort) |> dplyr::distinct()
+    )
   )
-
-  exportFolder <- tempfile()
-  dir.create(path = exportFolder, showWarnings = FALSE, recursive = TRUE)
-
-  CohortPathways::executeCohortPathways(
+  
+  output <- CohortPathways::executeCohortPathways(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTableName = cohortTableName,
     targetCohortIds = c(1, 2),
-    eventCohortIds = c(10, 20),
-    cohortDefinitionSet = cohortDefinitionSet,
-    exportFolder = exportFolder,
-    overwrite = TRUE
+    eventCohortIds = c(10, 20)
   )
-
-  testthat::expect_true(object = file.exists(
-    file.path(exportFolder, "pathwayAnalysisCodes.csv")
-  ))
-  testthat::expect_true(object = file.exists(
-    file.path(exportFolder, "pathwayAnalysisCodesLong.csv")
-  ))
-  testthat::expect_true(object = file.exists(
-    file.path(exportFolder, "pathwayAnalysisStats.csv")
-  ))
-  testthat::expect_true(object = file.exists(
-    file.path(exportFolder, "pathwaysAnalysisPaths.csv")
-  ))
-
-  pathwayAnalysisCodes <-
-    readr::read_csv(
-      file = file.path(exportFolder, "pathwayAnalysisCodes.csv"),
-      col_types = readr::cols()
-    ) |> SqlRender::snakeCaseToCamelCaseNames()
-  testthat::expect_true(object = nrow(pathwayAnalysisCodes) > 0)
-
-  pathwayAnalysisCodesLong <-
-    readr::read_csv(
-      file = file.path(exportFolder, "pathwayAnalysisCodesLong.csv"),
-      col_types = readr::cols()
-    ) |> SqlRender::snakeCaseToCamelCaseNames()
-  testthat::expect_true(object = nrow(pathwayAnalysisCodesLong) > 0)
-
-  pathwayAnalysisStatsData <-
-    readr::read_csv(
-      file = file.path(exportFolder, "pathwayAnalysisStats.csv"),
-      col_types = readr::cols()
-    ) |> SqlRender::snakeCaseToCamelCaseNames()
-  testthat::expect_true(object = nrow(pathwayAnalysisStatsData) > 0)
-
-  pathwaysAnalysisPathsData <-
-    readr::read_csv(
-      file = file.path(exportFolder, "pathwaysAnalysisPaths.csv"),
-      col_types = readr::cols()
-    ) |> SqlRender::snakeCaseToCamelCaseNames()
-  testthat::expect_true(object = nrow(pathwayAnalysisStatsData) > 0)
-
+  
+  testthat::expect_true(object = ('pathwayAnalysisStatsData' %in% names(output)))
+  testthat::expect_true(object = ('pathwaysAnalysisPathsData' %in% names(output)))
+  testthat::expect_true(object = ('pathwaysAnalysisEventsData' %in% names(output)))
+  testthat::expect_true(object = ('pathwaycomboIds' %in% names(output)))
+  testthat::expect_true(object = ('isCombo' %in% names(output)))
+  testthat::expect_true(object = ('pathwayAnalysisCodesData' %in% names(output)))
+  
   DatabaseConnector::disconnect(connection = connection)
-
-  CohortPathways::executeCohortPathways(
-    connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+  
+  output2 <- CohortPathways::executeCohortPathways(
+    connectionDetails = connectionDetails,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    targetDatabaseSchema = cohortDatabaseSchema,
     cohortTableName = cohortTableName,
     targetCohortIds = c(1, 2),
-    eventCohortIds = c(10, 20),
-    cohortDefinitionSet = cohortDefinitionSet,
-    exportFolder = exportFolder,
-    overwrite = TRUE
+    eventCohortIds = c(10, 20)
   )
-
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
-    sql = "DROP TABLE IF EXISTS @cohort_database_schema.@table_temp;",
-    table_temp = cohortTableName,
-    cohort_database_schema = cohortDatabaseSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
+  
+  testthat::expect_true(object = ('pathwayAnalysisStatsData' %in% names(output2)))
+  testthat::expect_true(object = ('pathwaysAnalysisPathsData' %in% names(output2)))
+  testthat::expect_true(object = ('pathwaysAnalysisEventsData' %in% names(output2)))
+  testthat::expect_true(object = ('pathwaycomboIds' %in% names(output2)))
+  testthat::expect_true(object = ('isCombo' %in% names(output2)))
+  testthat::expect_true(object = ('pathwayAnalysisCodesData' %in% names(output2)))
 })
