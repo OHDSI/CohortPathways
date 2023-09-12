@@ -1,6 +1,6 @@
 Package: CohortPathways
 Type: Package
-Title: Create Pathways From Target to Event Cohorts
+Title: Create Pathways from Target to Event Cohorts
 Version: 0.0.1
 Date: 2023-09-11
 Authors@R: c(
