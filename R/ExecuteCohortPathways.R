@@ -565,10 +565,10 @@ executeCohortPathways <- function(connectionDetails = NULL,
       names_to = "names",
       values_to = "comboIds"
     ) |>
-    dplyr::select(comboIds) |>
+    dplyr::select(.data$comboIds) |>
     dplyr::distinct() |>
     dplyr::filter(.data$comboIds > 0) |>
-    dplyr::select(comboIds) |> 
+    dplyr::select(.data$comboIds) |> 
     dplyr::arrange(.data$comboIds)
   
   pathwayAnalysisCodesLong <- c()
@@ -581,7 +581,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
                         by = "cohortIndex") |>
       dplyr::inner_join(cohortDefinitionSet,
                         by = c("eventCohortId" = "cohortId")) |>
-      dplyr::rename(eventCohortName = .data$cohortName)
+      dplyr::rename(eventCohortName = cohortName)
     
     pathwayAnalysisCodesLong <- dplyr::bind_rows(combisData,
                                                  pathwayAnalysisCodesLong)
@@ -610,7 +610,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
       isCombo,
       numberOfEvents
     ) |>
-    dplyr::rename("code" = comboId)
+    dplyr::rename("code" = .data$comboId)
   
   pathwayAnalysisCodesData <- pathwayAnalysisCodesLong |>
     dplyr::select(
