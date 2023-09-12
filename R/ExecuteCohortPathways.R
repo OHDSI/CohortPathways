@@ -314,8 +314,8 @@ executeCohortPathways <- function(connectionDetails = NULL,
 
   pathwayAnalysisCodes <- "pa_codes"
   if (!is.null(targetDatabaseSchema)) {
-    # pathwayAnalysisCodes <-
-    #   paste0(targetDatabaseSchema, ".", pathwayAnalysisCodeTable)
+    pathwayAnalysisCodes <-
+      paste0(targetDatabaseSchema, ".", pathwayAnalysisCodes)
     pathwayAnalysisCodesTableIsTemp <- FALSE
   } else {
     pathwayAnalysisCodes <- paste0("#", pathwayAnalysisCodes)
@@ -693,7 +693,7 @@ executeCohortPathways <- function(connectionDetails = NULL,
     DatabaseConnector::insertTable(
       connection = connection,
       databaseSchema = targetDatabaseSchema,
-      tableName = pathwayAnalysisCodes,
+      tableName = "pa_codes",
       data = pathwayAnalysisCodesData,
       dropTableIfExists = FALSE,
       createTable = FALSE,
