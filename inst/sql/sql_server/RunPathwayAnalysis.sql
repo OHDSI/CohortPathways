@@ -1,15 +1,3 @@
-DROP TABLE IF EXISTS {@combo_window != 0 }?{ #raw_events }:{#event_cohort_eras};
-DROP TABLE IF EXISTS #date_replacements;
-DROP TABLE IF EXISTS #coll_dates_events;
-DROP TABLE IF EXISTS #non_rep_events;
-DROP TABLE IF EXISTS #combo_events;
-DROP TABLE IF EXISTS #event_cohort_eras;
-DROP TABLE IF EXISTS #raw_events;
-
-DROP TABLE IF EXISTS #pa_paths;
-DROP TABLE IF EXISTS #pa_stats;
-DROP TABLE IF EXISTS #pa_events;
-
 /*
 * Filter out events which do not fall into a person's target period
 * e.g. of event_cohorts:
