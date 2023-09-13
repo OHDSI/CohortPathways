@@ -136,6 +136,9 @@ select SUBJECT_ID, EVENT_COHORT_INDEX, COHORT_START_DATE, COHORT_END_DATE
 INTO #event_cohort_eras
 from cteFinalEras;
 
+DROP TABLE IF EXISTS #coll_dates_events;
+DROP TABLE IF EXISTS #date_replacements;
+DROP TABLE IF EXISTS #raw_events;
 
 -- End Collapse Events
 }
@@ -271,9 +274,6 @@ group by pathway_analysis_generation_id, target_cohort_id,
 
 
 DROP TABLE IF EXISTS {@combo_window != 0 }?{ #raw_events }:{#event_cohort_eras};
-DROP TABLE IF EXISTS #date_replacements;
-DROP TABLE IF EXISTS #coll_dates_events;
 DROP TABLE IF EXISTS #non_rep_events;
 DROP TABLE IF EXISTS #combo_events;
 DROP TABLE IF EXISTS #event_cohort_eras;
-DROP TABLE IF EXISTS #raw_events;
