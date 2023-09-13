@@ -1,3 +1,6 @@
+/* Adapted from https://github.com/OHDSI/WebAPI/blob/fe070e527abe61a59c42c23e69121f82dff5b4f1/src/main/resources/resources/pathway/runPathwayAnalysis.sql 
+  Changes  made a) exclusively use temp tables, b) abbreviated temp table names to avoid warning from DatabaseConnector 
+  See acknolwedgement The core implementation of CohortPathway analysis was developed by Christopher Knoll (github: chrisknoll), and enhanced by members of the OHDSI community: mick-iqvia (github), Odysseus Inc., and many other collaborators on the OHDSI/WebAPI team.*/
 /*
 * Filter out events which do not fall into a person's target period
 * e.g. of event_cohorts:
@@ -11,14 +14,13 @@ FROM (
 	  e.subject_id,
 	  e.cohort_start_date,
 	  dateadd(d, 1, e.cohort_end_date) as cohort_end_date
-	FROM @target_cohort_table  e
+	FROM @target_cohort_table e
 	  JOIN ( @event_cohort_id_index_map ) ec ON e.cohort_definition_id = ec.cohort_definition_id
 	  JOIN @target_cohort_table t ON t.cohort_start_date <= e.cohort_start_date AND e.cohort_start_date <= t.cohort_end_date AND t.subject_id = e.subject_id
 	WHERE t.cohort_definition_id = @pathway_target_cohort_id
 ) RE;
 
 {@combo_window != 0 }?{-- Begin Collapse Events
-
 /*
 * Find closely located dates, which need to be collapsed, based on combo_window
 */
@@ -51,6 +53,7 @@ WHERE cohort_date <> replacement_date;
 /*
 * Collapse dates
 */
+
 SELECT
   e.subject_id,
   e.event_cohort_index,
@@ -124,8 +127,13 @@ select SUBJECT_ID, EVENT_COHORT_INDEX, COHORT_START_DATE, COHORT_END_DATE
 INTO #event_cohort_eras
 from cteFinalEras;
 
+
 DROP TABLE IF EXISTS #coll_dates_events;
+
+
 DROP TABLE IF EXISTS #date_replacements;
+
+
 DROP TABLE IF EXISTS #raw_events;
 
 -- End Collapse Events
@@ -234,6 +242,13 @@ FROM (
   AND target_cohort_id = @pathway_target_cohort_id
 ) pathway_count;
 
+DROP TABLE #non_rep_events;
+
+
+DROP TABLE #combo_events;
+
+
+DROP TABLE #event_cohort_eras;
 
 select pathway_analysis_generation_id, target_cohort_id,
 	step_1, step_2, step_3, step_4, step_5, step_6, step_7, step_8, step_9, step_10,
@@ -260,8 +275,3 @@ group by pathway_analysis_generation_id, target_cohort_id,
 	step_1, step_2, step_3, step_4, step_5, step_6, step_7, step_8, step_9, step_10
 ;
 
-
-DROP TABLE IF EXISTS {@combo_window != 0 }?{ #raw_events }:{#event_cohort_eras};
-DROP TABLE IF EXISTS #non_rep_events;
-DROP TABLE IF EXISTS #combo_events;
-DROP TABLE IF EXISTS #event_cohort_eras;
