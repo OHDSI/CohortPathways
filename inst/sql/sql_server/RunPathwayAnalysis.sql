@@ -89,7 +89,6 @@ FROM (
 
 -- we need to era-fy the collapsed dates because collapsing leads to overlapping.
 
-DROP TABLE IF EXISTS #event_cohort_eras;
 with cteEndDates (SUBJECT_ID, EVENT_COHORT_INDEX, END_DATE) as -- the magic: identify the end of eras, paritioned by the GAP_GROUP and the person_id
 (
 	select SUBJECT_ID, EVENT_COHORT_INDEX, EVENT_DATE as END_DATE -- unpad the end date
