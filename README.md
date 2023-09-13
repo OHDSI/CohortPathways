@@ -17,6 +17,8 @@ Features
 Acknowledgements
 ============
 
+The core implementation of CohortPathway analysis was developed by Christopher Knoll (github: chrisknoll), and enhanced by members of the OHDSI community: mick-iqvia (github), Odysseus Inc., and many other collaborators on the OHDSI/WebAPI team.
+
 
 Technology
 ============
