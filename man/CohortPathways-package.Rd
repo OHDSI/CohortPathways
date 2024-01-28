@@ -19,6 +19,11 @@ Useful links:
 \author{
 \strong{Maintainer}: Gowtham Rao \email{rao@ohdsi.org}
 
+Authors:
+\itemize{
+  \item Chris Knoll \email{cknoll@ohdsi.org}
+}
+
 Other contributors:
 \itemize{
   \item Observational Health Data Science and Informatics [copyright holder]

@@ -26,7 +26,7 @@ Suggests:
 	testthat,
 	withr
 License: Apache License
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.0
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 Language: en-US
