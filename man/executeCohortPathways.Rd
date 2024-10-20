@@ -64,13 +64,6 @@ Assumes the cohorts have already been instantiated.
 }
 \examples{
 \dontrun{
-connectionDetails <- createConnectionDetails(
-  dbms = "postgresql",
-  server = "ohdsi.com",
-  port = 5432,
-  user = "me",
-  password = "secure"
-)
 
 executeCohortPathways(
   connectionDetails = connectionDetails,
