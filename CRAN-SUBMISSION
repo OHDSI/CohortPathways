@@ -1,31 +1,3 @@
 Version: 0.0.1
-Date: 2024-10-20 11:59:32 UTC
-SHA: fatal: detected dubious ownership in repository at 'E:/git/github/ohdsi/CohortPathways'
-
-Version: 0.0.1
-Date: 2024-10-20 11:59:32 UTC
-SHA: 'E:/git/github/ohdsi/CohortPathways' is owned by:
-
-Version: 0.0.1
-Date: 2024-10-20 11:59:32 UTC
-SHA: 'S-1-5-21-1614895754-2146847981-1606980848-1512914'
-
-Version: 0.0.1
-Date: 2024-10-20 11:59:32 UTC
-SHA: but the current user is:
-
-Version: 0.0.1
-Date: 2024-10-20 11:59:32 UTC
-SHA: 'S-1-5-21-1614895754-2146847981-1606980848-1505242'
-
-Version: 0.0.1
-Date: 2024-10-20 11:59:32 UTC
-SHA: To add an exception for this directory, call:
-
-Version: 0.0.1
-Date: 2024-10-20 11:59:32 UTC
-SHA:
-
-Version: 0.0.1
-Date: 2024-10-20 11:59:32 UTC
-SHA: git config --global --add safe.directory E:/git/github/ohdsi/CohortPathways
+Date: 2025-03-18 15:18:21 UTC
+SHA: 145815e2b20612b50d70ddba508e5e05ca92efb9
