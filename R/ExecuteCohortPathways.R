@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortPathways
 #
@@ -49,13 +49,6 @@
 #'
 #' @examples
 #' \dontrun{
-#' connectionDetails <- createConnectionDetails(
-#'   dbms = "postgresql",
-#'   server = "ohdsi.com",
-#'   port = 5432,
-#'   user = "me",
-#'   password = "secure"
-#' )
 #'
 #' executeCohortPathways(
 #'   connectionDetails = connectionDetails,

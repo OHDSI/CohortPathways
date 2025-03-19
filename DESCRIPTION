@@ -2,14 +2,14 @@ Package: CohortPathways
 Type: Package
 Title: Create Pathways from Target to Event Cohorts
 Version: 0.0.1
-Date: 2023-09-11
+Date: 2024-10-20
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Chris", "Knoll", email = "cknoll@ohdsi.org", role = c("aut")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
   )
 Maintainer: Gowtham Rao <rao@ohdsi.org>
-Description: This software tool is designed to compute the temporal relationship defined as pathways
+Description: Software tool designed to compute the temporal relationship defined as pathways
     between any two instantiated cohorts. The cohorts are input as Target and event cohorts.
 Depends:
 	DatabaseConnector (>= 5.0.0),
@@ -26,7 +26,7 @@ Suggests:
 	testthat,
 	withr
 License: Apache License
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 Language: en-US
