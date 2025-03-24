@@ -1,4 +1,4 @@
-# Copyright 2024 Observational Health Data Sciences and Informatics
+# Copyright 2025 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortPathways
 #
@@ -26,6 +26,14 @@ devtools::check()
 # Create manual -----------------------------------------------------------
 unlink("extras/CohortPathways.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortPathways.pdf")
+
+# Create Vignettes---------------------------------------------------------
+dir.create(file.path("inst","doc"), showWarnings = FALSE)
+rmarkdown::render("vignettes/IntroductionToCohortPathways.Rmd",
+                  output_file = "../inst/doc/IntroductionToCohortPathways.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
 
 # Build site---------------------------------------------------------
 pkgdown::build_site()
