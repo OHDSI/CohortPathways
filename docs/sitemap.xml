@@ -5,9 +5,15 @@
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
 <url><loc>/news/index.html</loc></url>
+<url><loc>/reference/calculateSummaryStatistics.html</loc></url>
 <url><loc>/reference/CohortPathways-package.html</loc></url>
+<url><loc>/reference/createIfNotExist.html</loc></url>
+<url><loc>/reference/createViolinPlot.html</loc></url>
 <url><loc>/reference/executeCohortPathways.html</loc></url>
+<url><loc>/reference/extractBitSum.html</loc></url>
+<url><loc>/reference/formatDecimalWithComma.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/plotCohortPathways.html</loc></url>
+<url><loc>/reference/timeToFeatureCohort.html</loc></url>
 </urlset>
 

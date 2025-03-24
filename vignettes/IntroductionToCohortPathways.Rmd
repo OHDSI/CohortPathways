@@ -115,7 +115,7 @@ The `result` object is a named list of data frames. For instance:
 3. **`result$pathwaysAnalysisEventsData`**  
    A more granular breakdown of the events in each path.
 
-You can use these data frames to build your own custom visualizations, or feed them into an R-based sunburst library or Sankee plot.
+You can use these data frames to build your own custom visualizations, or feed them into an R-based sunburst library or Sankey plot.
 
 For example, to see the top 10 most frequent pathways:
 

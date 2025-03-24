@@ -17,10 +17,13 @@ Depends:
 Imports:
     checkmate,
     dplyr,
+    ggplot2,
+    hrbrthemes,
     lifecycle,
     rlang,
     SqlRender,
-    tidyr
+    tidyr,
+    viridis
 Suggests:
   remotes,
 	testthat,
