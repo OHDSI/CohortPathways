@@ -4,6 +4,7 @@
 .Ruserdata
 *.tmp
 .Rprofile
+utlts/
 errorReportSql.txt
 pathwaysAnalysisPathsData.csv
 pathwayAnalysisCodesLong.csv
