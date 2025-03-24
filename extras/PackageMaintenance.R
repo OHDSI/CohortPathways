@@ -35,6 +35,20 @@ rmarkdown::render("vignettes/IntroductionToCohortPathways.Rmd",
                                           toc = TRUE,
                                           number_sections = TRUE))
 
+dir.create(file.path("inst","doc"), showWarnings = FALSE)
+rmarkdown::render("vignettes/VisualizingPathwaysWithSunburstPlots.Rmd",
+                  output_file = "../inst/doc/VisualizingPathwaysWithSunburstPlots.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
+dir.create(file.path("inst","doc"), showWarnings = FALSE)
+rmarkdown::render("vignettes/VisualizingPathwaysWithSankeyPlots.Rmd",
+                  output_file = "../inst/doc/VisualizingPathwaysWithSankeyPlots.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
 # Build site---------------------------------------------------------
 pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()

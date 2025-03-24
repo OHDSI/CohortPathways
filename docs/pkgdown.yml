@@ -3,4 +3,6 @@ pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   IntroductionToCohortPathways: IntroductionToCohortPathways.html
-last_built: 2025-03-24T14:16Z
+  VisualizingPathwaysWithSankeyPlots: VisualizingPathwaysWithSankeyPlots.html
+  VisualizingPathwaysWithSunburstPlots: VisualizingPathwaysWithSunburstPlots.html
+last_built: 2025-03-24T14:29Z
