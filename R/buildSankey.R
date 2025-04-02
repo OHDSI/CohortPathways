@@ -31,7 +31,8 @@
 #' }
 createPathwaySankey <- function(
     cpResults,
-    generationSet) {
+    generationSet,
+    nPaths = 3) {
   checkmate::assertList(
     cpResults,
     min.len = 7,
@@ -39,7 +40,8 @@ createPathwaySankey <- function(
   )
   pathwaysAnalysisPathsData <- purrr::pluck(
     cpResults, 'pathwaysAnalysisPathsData'
-  )
+  ) |> 
+    filter(targetCohortId == 4)
   isCombo <- purrr::pluck(
     cpResults, 'isCombo'
   )
@@ -54,7 +56,7 @@ createPathwaySankey <- function(
     min.rows = 1,
     min.cols = 1
   )
-
+  
   eventNames <- .prepareEventNames(generationSet, cpResults)
   
   # Extract steps and create links
@@ -68,25 +70,30 @@ createPathwaySankey <- function(
   for(i in 1:nrow(pathwaysAnalysisPathsData)) {
     # Get steps for this pathway
     steps <- c()
-    for(j in 1:10) {  # Assuming maximum 10 steps
+    for(j in 1:nPaths) {  
       col_name <- paste0("step", j)
       if(col_name %in% colnames(pathwaysAnalysisPathsData) && !is.na(pathwaysAnalysisPathsData[[col_name]][i])) {
         steps <- c(steps, as.character(pathwaysAnalysisPathsData[[col_name]][i]))
       }
     }
     
+    # Remove duplicates to prevent cycles
+    steps <- unique(steps)
+    
     # If we have steps, create links
     if(length(steps) > 0) {
       # Add start to first step
-      links <- rbind(links, tibble(
+      links <- rbind(links, dplyr::tibble(
         source = "Start",
         target = steps[1],
         value = pathwaysAnalysisPathsData$countValue[i]
       ))
       
-      # Add links between consecutive steps
+      # Add links between consecutive steps, but only in forward direction
       if(length(steps) > 1) {
         for(k in 1:(length(steps)-1)) {
+          # Check if this is a forward progression (no recursion)
+          # We consider it forward if the step index is higher
           links <- rbind(links, tibble(
             source = steps[k],
             target = steps[k+1],
@@ -99,15 +106,16 @@ createPathwaySankey <- function(
   
   # Aggregate links with the same source and target
   links <- links %>%
-    group_by(.data$source, .data$target) %>%
-    summarize(value = sum(.data$value), .groups = 'drop')
+    dplyr::group_by(.data$source, .data$target) %>%
+    summarize(value = sum(.data$value), .groups = 'drop') |> 
+    dplyr::filter(.data$value > 5)
   
   # Create nodes dataframe
   all_nodes <- unique(c(links$source, links$target))
-  nodes <- tibble(
-    name = all_nodes
-  )
   
+  nodes <- data.frame(name = unique(c(links$source, links$target)))
+  nodes <- data.table::data.table(nodes)
+  nodes$name <- sub('__[0-9]+$', '', nodes$name)
   # Add group information (start, combo, single)
   nodes$group <- "single"  # Default
   nodes$group[nodes$name == "Start"] <- "start"
@@ -149,8 +157,8 @@ createPathwaySankey <- function(
       event_code <- nodes$name[i]
       
       # Check if we have a custom name for this event
-      if(!is.null(eventNames) && event_code %in% names(eventNames)) {
-        custom_name <- eventNames[event_code]
+      if(!is.null(eventNames) && event_code %in% eventNames$code) {
+        custom_name <- eventNames[eventNames$code == event_code, ]$combination
         
         # Format based on whether it's a combo or not
         if(nodes$group[i] == "combo" && !is.na(nodes$events[i])) {
@@ -183,23 +191,37 @@ createPathwaySankey <- function(
            .domain(["start", "single", "combo"])
            .range(["#2ca02c", "#1f77b4", "#ff7f0e"])')
   )
+  Nodes <- dplyr::tibble(name = nodes$label, group = nodes$group)
+  
+  links$type <- sub(' .*', '',
+                    as.data.frame(nodes)[links$source + 1, 'name'])
+  
+  label <- unique(links$type)
+  label2 <- paste0("'", paste(label, collapse = "','"), "',", "'end'")
+  
+  kelly_colors <- unname(grafify::graf_palettes$kelly)[-1]
+  
+  col <- kelly_colors[seq_along(label)]
+  col2 <- paste0("'", paste(col, collapse = "','"), "',", "'#1B1919FF'")
+  
+  myCol <- glue::glue('d3.scaleOrdinal() .domain([{label2}]) .range([{col2}])')
   
   # Create Sankey diagram
   sankey <- networkD3::sankeyNetwork(
     Links = links,
-    Nodes = data.frame(name = nodes$label, group = nodes$group),
-    Source = "source",
-    Target = "target",
-    Value = "value",
-    NodeID = "name",
+    Nodes = Nodes,
+    Source = 'source',
+    Target = 'target',
+    Value = 'value',
+    NodeID = 'name',
     NodeGroup = "group",
-    colourScale = color_scale,
+    colourScale = myCol,
     fontSize = 12,
     nodeWidth = 30,
     nodePadding = 15,
     height = 600,
     width = 1000,
-    sinksRight = TRUE
+    sinksRight = FALSE
   )
   
   # Add styling and legend
@@ -266,11 +288,15 @@ createPathwaySankey <- function(
 .prepareEventNames <- function(generationSet, cpResults) {
   event_names <- purrr::pluck(
     cpResults, 'pathwayAnalysisCodesLong'
-  ) |> select(.data$code, .data$eventCohortId) |>  
+  ) |> select(.data$code, .data$eventCohortId) |> 
+    dplyr::distinct() |> 
     inner_join(generationSet |> 
                  select(cohortId, cohortName), by = join_by(
-      eventCohortId == cohortId
-    )) |>
-    with(stats::setNames(cohortName, as.character(code)))
+                   eventCohortId == cohortId
+                 )) |> 
+    group_by(code) |> 
+    dplyr::reframe(
+      combination = paste(cohortName, collapse = ' and ')
+    )
   return(event_names)
 }

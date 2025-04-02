@@ -4,7 +4,7 @@
 \alias{createPathwaySankey}
 \title{Create a Sankey Diagram for Treatment Pathways}
 \usage{
-createPathwaySankey(cpResults, generationSet)
+createPathwaySankey(cpResults, generationSet, nPaths = 3)
 }
 \arguments{
 \item{cpResults}{A list containing the results from CohortPathway analysis.

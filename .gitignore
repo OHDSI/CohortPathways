@@ -16,3 +16,4 @@ sql/sql_server/CreateTablePathwayAnalysisPaths.sql
 sql/sql_server/CreateTablePathwayAnalysisStats.sql
 sql/sql_server/PathwayAnalysisPaths.sql
 sql/sql_server/RunPathwayAnalysis.sql
+extras/
