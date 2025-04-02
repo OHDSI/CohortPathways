@@ -4,6 +4,7 @@
 .Ruserdata
 *.tmp
 .Rprofile
+utlts/
 errorReportSql.txt
 pathwaysAnalysisPathsData.csv
 pathwayAnalysisCodesLong.csv
@@ -15,3 +16,4 @@ sql/sql_server/CreateTablePathwayAnalysisPaths.sql
 sql/sql_server/CreateTablePathwayAnalysisStats.sql
 sql/sql_server/PathwayAnalysisPaths.sql
 sql/sql_server/RunPathwayAnalysis.sql
+extras/
