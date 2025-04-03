@@ -20,6 +20,7 @@ createPathwaySunburst <- function(
   
   rlang::check_installed("sunburstR")
   rlang::check_installed("d3r")
+  rlang::check_installed("htmlwidgets")
   # Input validation
   checkmate::assertList(
     cpResults,
@@ -187,14 +188,11 @@ createPathwaySunburst <- function(
     )
     sunburst <- htmlwidgets::onRender(
       sunburst,
-      sprintf("
-    function(el, x) {
+            "function(el, x) {
       // Make legend visible by default
       d3.select(el).select('.sunburst-togglelegend').property('checked', true);
       d3.select(el).select('.sunburst-legend').style('visibility', '');
-    }"
-     )
-    )
+    }")
     return(sunburst)
   })
   return(.plots)
@@ -207,13 +205,14 @@ createPathwaySunburst <- function(
     cpResults, 'pathwayAnalysisCodesLong'
   ) |> dplyr::select(.data$code, .data$eventCohortId) |> 
     dplyr::distinct() |> 
-    dplyr::inner_join(generationSet |> 
-                        dplyr::select(cohortId, cohortName), by = dplyr::join_by(
-                   eventCohortId == cohortId
+    dplyr::inner_join(
+      generationSet |> 
+        dplyr::select(cohortId, cohortName), 
+     by =  dplyr::join_by(eventCohortId == cohortId
                  )) |> 
-    dplyr::group_by(code) |>
+    dplyr::group_by(code) |> 
     dplyr::reframe(
-      combination = paste(cohortName, collapse = '-and-')
+      combination = paste(cohortName, collapse = ' and\n')
     )
   return(event_names)
 }
