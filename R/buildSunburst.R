@@ -85,9 +85,6 @@ createPathwaySunburst <- function(
       }
     }
   }
-  
-  
-
   .plots <- lapply(seq_along(pathwaysAnalysisPathsDatas), function(.x) {
     pathwaysAnalysisPathsData <- pathwaysAnalysisPathsDatas[[.x]]
     # Prepare data for sunburst plot in the format required by sunburstR
@@ -180,16 +177,7 @@ createPathwaySunburst <- function(
     sunburstData <- sunburstData |>
       dplyr::group_by(.data$sequence) |>
       dplyr::summarise(value = sum(value), .groups = "drop")
-    
-    # Try a simpler approach using d3r
-    # Convert to hierarchical format
-    hierarchy <- d3r::d3_nest(
-      sunburstData,
-      value_cols = "value",
-      root = "Treatment Pathways"
-    )
-    
-    
+
     # Create the sunburst plot using sunburstR
     sunburst <- sunburstR::sunburst(
       data = sunburstData,
@@ -210,4 +198,22 @@ createPathwaySunburst <- function(
     return(sunburst)
   })
   return(.plots)
+}
+
+
+
+.prepareEventNames <- function(generationSet, cpResults) {
+  event_names <- purrr::pluck(
+    cpResults, 'pathwayAnalysisCodesLong'
+  ) |> dplyr::select(.data$code, .data$eventCohortId) |> 
+    dplyr::distinct() |> 
+    dplyr::inner_join(generationSet |> 
+                        dplyr::select(cohortId, cohortName), by = dplyr::join_by(
+                   eventCohortId == cohortId
+                 )) |> 
+    dplyr::group_by(code) |>
+    dplyr::reframe(
+      combination = paste(cohortName, collapse = '-and-')
+    )
+  return(event_names)
 }
