@@ -4,13 +4,7 @@
 \alias{createPathwaySunburst}
 \title{Create a Sunburst Plot for Treatment Pathways}
 \usage{
-createPathwaySunburst(
-  cpResults,
-  generationSet,
-  nPaths = 3,
-  minCount = 5,
-  debug = TRUE
-)
+createPathwaySunburst(cpResults, generationSet, nPaths = 3, minCount = 5)
 }
 \arguments{
 \item{cpResults}{A list containing the results from CohortPathway analysis.
@@ -22,8 +16,6 @@ that will be used to generate descriptive names for the events in the diagram.}
 \item{nPaths}{Integer specifying the maximum number of steps to include in the plot.}
 
 \item{minCount}{Integer specifying the minimum count value for a path to be included.}
-
-\item{debug}{Logical indicating whether to print debug information.}
 }
 \value{
 An HTML widget object containing the interactive sunburst plot.

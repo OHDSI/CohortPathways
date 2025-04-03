@@ -280,7 +280,6 @@ createPathwaySankey <- function(
     }
     '
   )
-  
   return(sankey)
 }
 
@@ -294,9 +293,9 @@ createPathwaySankey <- function(
                  select(cohortId, cohortName), by = join_by(
                    eventCohortId == cohortId
                  )) |> 
-    group_by(code) |> 
+    group_by(code) |>
     dplyr::reframe(
-      combination = paste(cohortName, collapse = ' and ')
+      combination = paste(cohortName, collapse = '-and-')
     )
   return(event_names)
 }

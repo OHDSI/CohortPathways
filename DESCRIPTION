@@ -25,9 +25,12 @@ Imports:
     SqlRender,
     tidyr
 Suggests:
-  remotes,
-	testthat,
-	withr
+    d3r,
+    grafify,
+    remotes,
+    sunburstR,
+    testthat,
+    withr
 License: Apache License
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)

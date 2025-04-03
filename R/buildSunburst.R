@@ -10,17 +10,16 @@
 #'        that will be used to generate descriptive names for the events in the diagram.
 #' @param nPaths Integer specifying the maximum number of steps to include in the plot.
 #' @param minCount Integer specifying the minimum count value for a path to be included.
-#' @param debug Logical indicating whether to print debug information.
-#'
 #' @return An HTML widget object containing the interactive sunburst plot.
 #' @export
 createPathwaySunburst <- function(
     cpResults,
     generationSet,
     nPaths = 3,
-    minCount = 5,
-    debug = TRUE) {
+    minCount = 5) {
   
+  rlang::check_installed("sunburstR")
+  rlang::check_installed("d3r")
   # Input validation
   checkmate::assertList(
     cpResults,
@@ -29,73 +28,55 @@ createPathwaySunburst <- function(
   )
   
   # Extract required data
-  pathwaysAnalysisPathsData <- purrr::pluck(
+  pathwaysAnalysisPathsDatas <- purrr::pluck(
     cpResults, 'pathwaysAnalysisPathsData'
-  )
+  ) |> dplyr::group_by(.data$targetCohortId) |> 
+    dplyr::group_split()
   
   isCombo <- purrr::pluck(
     cpResults, 'isCombo'
   )
-  
-  # Check inputs
-  checkmate::assertDataFrame(
-    x = pathwaysAnalysisPathsData,
-    min.rows = 1,
-    min.cols = 12
-  )
+
   checkmate::assertDataFrame(
     x = isCombo,
     min.rows = 1,
     min.cols = 1
   )
-  
-  if(debug) {
-    cat("Number of pathway rows:", nrow(pathwaysAnalysisPathsData), "\n")
-    cat("First few rows of pathwaysAnalysisPathsData:\n")
-    print(head(pathwaysAnalysisPathsData))
-  }
-  
   # Get event names
   eventNames <- .prepareEventNames(generationSet, cpResults)
-  
-  if(debug) {
-    cat("Number of event names:", nrow(eventNames), "\n")
-    cat("First few event names:\n")
-    print(head(eventNames))
-  }
-  
+
   # Create a mapping of codes to event names
-  code_to_name <- stats::setNames(
+  codeToName <- rlang::set_names(
     eventNames$combination, 
     as.character(eventNames$code)
   )
   
   # Create a mapping of comboIds to isCombo values
-  combo_map <- stats::setNames(isCombo$isCombo, as.character(isCombo$comboId))
+  comboMap <- rlang::set_names(isCombo$isCombo, as.character(isCombo$comboId))
   
   # Create a mapping of comboIds to numberOfEvents
-  events_map <- stats::setNames(isCombo$numberOfEvents, as.character(isCombo$comboId))
+  eventsMap <- rlang::set_names(isCombo$numberOfEvents, as.character(isCombo$comboId))
   
   # Function to get a descriptive name for a code
   get_name <- function(code) {
     if (code == "Start") return("Start")
     
     # Check if we have a custom name for this event
-    if (code %in% names(code_to_name)) {
-      name <- code_to_name[code]
+    if (code %in% names(codeToName)) {
+      name <- codeToName[code]
       
       # Add combo information if available
-      if (code %in% names(combo_map) && !is.na(combo_map[code]) && combo_map[code] == 1) {
-        if (code %in% names(events_map) && !is.na(events_map[code])) {
-          name <- paste0(name, " (", events_map[code], " events)")
+      if (code %in% names(comboMap) && !is.na(comboMap[code]) && comboMap[code] == 1) {
+        if (code %in% names(eventsMap) && !is.na(eventsMap[code])) {
+          name <- paste0(name, " (", eventsMap[code], " events)")
         }
       }
       return(name)
     } else {
       # Use default formatting if no custom name is available
-      if (code %in% names(combo_map) && !is.na(combo_map[code]) && combo_map[code] == 1) {
-        if (code %in% names(events_map) && !is.na(events_map[code])) {
-          return(paste0("Combo ", code, " (", events_map[code], " events)"))
+      if (code %in% names(comboMap) && !is.na(comboMap[code]) && comboMap[code] == 1) {
+        if (code %in% names(eventsMap) && !is.na(eventsMap[code])) {
+          return(paste0("Combo ", code, " (", eventsMap[code], " events)"))
         } else {
           return(paste0("Combo ", code))
         }
@@ -105,140 +86,128 @@ createPathwaySunburst <- function(
     }
   }
   
-  # Prepare data for sunburst plot in the format required by sunburstR
-  sequences <- data.frame(
-    pathId = integer(),
-    step = integer(),
-    name = character(),
-    stringsAsFactors = FALSE
-  )
   
-  # Process each pathway row
-  for (i in 1:nrow(pathwaysAnalysisPathsData)) {
-    # Start with "root" for each pathway
-    sequences <- rbind(
-      sequences,
-      data.frame(
-        pathId = i,
-        step = 0,
-        name = "root",
-        stringsAsFactors = FALSE
-      )
+
+  .plots <- lapply(seq_along(pathwaysAnalysisPathsDatas), function(.x) {
+    pathwaysAnalysisPathsData <- pathwaysAnalysisPathsDatas[[.x]]
+    # Prepare data for sunburst plot in the format required by sunburstR
+    sequences <- dplyr::tibble(
+      pathId = integer(),
+      step = integer(),
+      name = character()
     )
-    
-    # Add "Start" as the first step
-    sequences <- rbind(
-      sequences,
-      data.frame(
-        pathId = i,
-        step = 1,
-        name = "Start",
-        stringsAsFactors = FALSE
-      )
-    )
-    
-    # Add subsequent steps
-    step_count <- 2  # Start from step 2 (after "Start")
-    for (j in 1:nPaths) {
-      col_name <- paste0("step", j)
-      if (col_name %in% colnames(pathwaysAnalysisPathsData) && 
-          !is.na(pathwaysAnalysisPathsData[[col_name]][i])) {
-        code <- as.character(pathwaysAnalysisPathsData[[col_name]][i])
-        name <- get_name(code)
-        
-        sequences <- rbind(
-          sequences,
-          data.frame(
-            pathId = i,
-            step = step_count,
-            name = name,
-            stringsAsFactors = FALSE
-          )
-        )
-        step_count <- step_count + 1
-      }
-    }
-  }
-  
-  if(debug) {
-    cat("Number of sequence rows:", nrow(sequences), "\n")
-    cat("First few sequence rows:\n")
-    print(head(sequences))
-  }
-  
-  # Create sequence strings and values dataframe
-  sunburst_data <- data.frame(
-    sequence = character(),
-    value = numeric(),
-    stringsAsFactors = FALSE
-  )
-  
-  # Process each pathway
-  for (i in unique(sequences$pathId)) {
-    # Get steps for this pathway
-    path_steps <- sequences[sequences$pathId == i, ]
-    path_steps <- path_steps[order(path_steps$step), ]
-    
-    # Skip root, start with actual steps
-    if (nrow(path_steps) > 1) {
-      # Create sequence string (skip "root")
-      seq_names <- path_steps$name[path_steps$name != "root"]
-      sequence <- paste(seq_names, collapse = "-")
+    # Process each pathway row
+    for (i in 1:nrow(pathwaysAnalysisPathsData)) {
       
-      # Get count value for this pathway
-      count_value <- pathwaysAnalysisPathsData$countValue[i]
-      if (!is.na(count_value) && count_value >= minCount) {
-        sunburst_data <- rbind(
-          sunburst_data,
-          data.frame(
-            sequence = sequence,
-            value = count_value,
-            stringsAsFactors = FALSE
-          )
+      # Start with "root" for each pathway
+      
+      sequences <- rbind(
+        sequences,
+        dplyr::tibble(
+          pathId = i,
+          step = 0,
+          name = "root"
         )
+      )
+      # Add "Start" as the first step
+      sequences <- rbind(
+        sequences,
+        dplyr::tibble(
+          pathId = i,
+          step = 1,
+          name = "Start"
+        )
+      )
+      
+      # Add subsequent steps
+      step_count <- 2  # Start from step 2 (after "Start")
+      for (j in 1:nPaths) {
+        col_name <- paste0("step", j)
+        if (col_name %in% colnames(pathwaysAnalysisPathsData) && 
+            !is.na(pathwaysAnalysisPathsData[[col_name]][i])) {
+          code <- as.character(pathwaysAnalysisPathsData[[col_name]][i])
+          name <- get_name(code)
+          
+          sequences <- rbind(
+            sequences,
+            dplyr::tibble(
+              pathId = i,
+              step = step_count,
+              name = name
+            )
+          )
+          step_count <- step_count + 1
+        }
       }
     }
-  }
-  
-  if(debug) {
-    cat("Number of sunburst data rows:", nrow(sunburst_data), "\n")
-    cat("First few sunburst data rows:\n")
-    print(head(sunburst_data))
-  }
-  
-  # Ensure we have data
-  if (nrow(sunburst_data) == 0) {
-    stop("No pathways meet the minimum count threshold.")
-  }
-  
-  # Aggregate identical sequences
-  sunburst_data <- sunburst_data |>
-    dplyr::group_by(sequence) |>
-    dplyr::summarise(value = sum(value), .groups = "drop")
-  
-  if(debug) {
-    cat("Number of aggregated sunburst data rows:", nrow(sunburst_data), "\n")
-    cat("First few aggregated sunburst data rows:\n")
-    print(head(sunburst_data))
-  }
-  
-  # Try a simpler approach using d3r
-  # Convert to hierarchical format
-  hierarchy <- d3r::d3_nest(
-    sunburst_data,
-    value_cols = "value",
-    root = "Treatment Pathways"
-  )
-  
-  if(debug) {
-    cat("Hierarchy structure:\n")
-    str(hierarchy)
-  }
-  
-  # Create the sunburst plot using sunburstR
-  sunburst <- sunburstR::sunburst(
-    data = sunburst_data,
-    count = TRUE
-  )
-  return(sunburst)
+    
+    sunburstData <- dplyr::tibble(
+      sequence = character(),
+      value = numeric()
+    )
+    
+    # Process each pathway
+    for (i in unique(sequences$pathId)) {
+      # Get steps for this pathway
+      path_steps <- sequences[sequences$pathId == i, ]
+      path_steps <- path_steps[order(path_steps$step), ]
+      
+      # Skip root, start with actual steps
+      if (nrow(path_steps) > 1) {
+        # Create sequence string (skip "root")
+        seq_names <- path_steps$name[path_steps$name != "root"]
+        sequence <- paste(seq_names, collapse = "-")
+        
+        # Get count value for this pathway
+        count_value <- pathwaysAnalysisPathsData$countValue[i]
+        if (!is.na(count_value) && count_value >= minCount) {
+          sunburstData <- rbind(
+            sunburstData,
+            dplyr::tibble(
+              sequence = sequence,
+              value = count_value
+            )
+          )
+        }
+      }
+    }
+    # Ensure we have data
+    if (nrow(sunburstData) == 0) {
+      stop("No pathways meet the minimum count threshold.")
+    }
+    
+    # Aggregate identical sequences
+    sunburstData <- sunburstData |>
+      dplyr::group_by(.data$sequence) |>
+      dplyr::summarise(value = sum(value), .groups = "drop")
+    
+    # Try a simpler approach using d3r
+    # Convert to hierarchical format
+    hierarchy <- d3r::d3_nest(
+      sunburstData,
+      value_cols = "value",
+      root = "Treatment Pathways"
+    )
+    
+    
+    # Create the sunburst plot using sunburstR
+    sunburst <- sunburstR::sunburst(
+      data = sunburstData,
+      count = TRUE,
+      withD3 = T,
+      legend = list(w =380, h =50)
+    )
+    sunburst <- htmlwidgets::onRender(
+      sunburst,
+      sprintf("
+    function(el, x) {
+      // Make legend visible by default
+      d3.select(el).select('.sunburst-togglelegend').property('checked', true);
+      d3.select(el).select('.sunburst-legend').style('visibility', '');
+    }"
+     )
+    )
+    return(sunburst)
+  })
+  return(.plots)
 }
