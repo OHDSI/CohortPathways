@@ -192,13 +192,13 @@ createPathwaySunburst <- function(
     # Aggregate identical sequences
     sunburstData <- sunburstData |>
       dplyr::group_by(.data$sequence) |>
-      dplyr::summarise(value = sum(value), .groups = "drop")
+      dplyr::summarize(value = sum(.data$value), .groups = "drop")
 
     # Create the sunburst plot using sunburstR
     sunburst <- sunburstR::sunburst(
       data = sunburstData,
       count = TRUE,
-      withD3 = T,
+      withD3 = TRUE,
       legend = list(w =380, h =50)
     )
     sunburst <- htmlwidgets::onRender(
@@ -218,16 +218,14 @@ createPathwaySunburst <- function(
 .prepareEventNames <- function(generationSet, cpResults) {
   event_names <- purrr::pluck(
     cpResults, 'pathwayAnalysisCodesLong'
-  ) |> dplyr::select(.data$code, .data$eventCohortId) |> 
+  ) |> dplyr::select(.data$code, cohortId = .data$eventCohortId) |> 
     dplyr::distinct() |> 
     dplyr::inner_join(
       generationSet |> 
-        dplyr::select(cohortId, cohortName), 
-     by =  dplyr::join_by(eventCohortId == cohortId
-                 )) |> 
-    dplyr::group_by(code) |> 
+        dplyr::select(.data$cohortId, .data$cohortName)) |> 
+    dplyr::group_by(.data$code) |> 
     dplyr::reframe(
-      combination = paste(cohortName, collapse = ' and\n')
+      combination = paste(.data$cohortName, collapse = ' and\n')
     )
   return(event_names)
 }

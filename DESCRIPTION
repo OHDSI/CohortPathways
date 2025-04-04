@@ -17,7 +17,6 @@ Depends:
 Imports:
     checkmate,
     dplyr,
-    htmlwidgets,
     lifecycle,
     purrr,
     rlang,
