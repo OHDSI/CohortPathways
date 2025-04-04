@@ -86,8 +86,23 @@ createPathwaySunburst <- function(
       }
     }
   }
+  
+  targetNames <- purrr::map_chr(seq_along(
+    pathwaysAnalysisPathsDatas), function(xx) {
+    tId <- purrr::pluck(pathwaysAnalysisPathsDatas[[xx]], "targetCohortId") |> 
+      unique()
+    generationSet |> 
+      dplyr::filter(.data$cohortId %in% tId) |> 
+      dplyr::pull(.data$cohortName) |> unique()
+  })  
+  
+  
+  
+  
   .plots <- lapply(seq_along(pathwaysAnalysisPathsDatas), function(.x) {
     pathwaysAnalysisPathsData <- pathwaysAnalysisPathsDatas[[.x]]
+
+      
     # Prepare data for sunburst plot in the format required by sunburstR
     sequences <- dplyr::tibble(
       pathId = integer(),
@@ -195,7 +210,7 @@ createPathwaySunburst <- function(
     }")
     return(sunburst)
   })
-  return(.plots)
+  return(.plots |> rlang::set_names(targetNames))
 }
 
 
