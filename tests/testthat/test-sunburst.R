@@ -27,7 +27,7 @@ test_that("Sunburst works", {
     step10 = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
     countValue = c(3, 3013, 1, 5, 2, 1, 1, 1, 8, 2, 3, 1, 6640, 1, 1, 6, 153, 1, 2, 1, 44, 12, 208, 7, 5, 1, 1, 35, 2, 231, 5, 1)
   )
-  
+
   cpResults$isCombo <- data.frame(
     targetCohortId = c(4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4),
     comboId = c(2, 4, 6, 8, 16, 20, 24, 32, 48, 52, 56),

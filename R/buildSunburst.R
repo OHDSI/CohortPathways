@@ -17,54 +17,50 @@ createPathwaySunburst <- function(
     generationSet,
     nPaths = 3,
     minCount = 5) {
-  
   rlang::check_installed("sunburstR")
   rlang::check_installed("htmlwidgets")
   # Input validation
   checkmate::assertList(
     cpResults,
     min.len = 7,
-    types = 'data.frame'
-  )
-  
-  # Extract required data
-  pathwaysAnalysisPathsDatas <- purrr::pluck(
-    cpResults, 'pathwaysAnalysisPathsData'
-  ) |> dplyr::group_by(.data$targetCohortId) |> 
-    dplyr::group_split()
-  
-  isCombo <- purrr::pluck(
-    cpResults, 'isCombo'
+    types = "data.frame"
   )
 
-  checkmate::assertDataFrame(
-    x = isCombo,
-    min.rows = 1,
-    min.cols = 1
-  )
+  # Extract required data
+  pathwaysAnalysisPathsDatas <- purrr::pluck(
+    cpResults, "pathwaysAnalysisPathsData"
+  ) |>
+    dplyr::group_by(.data$targetCohortId) |>
+    dplyr::group_split()
+
+  isCombo <- purrr::pluck(cpResults, "isCombo")
+
+  checkmate::assertDataFrame(x = isCombo, min.rows = 1, min.cols = 1)
   # Get event names
   eventNames <- .prepareEventNames(generationSet, cpResults)
 
   # Create a mapping of codes to event names
   codeToName <- rlang::set_names(
-    eventNames$combination, 
+    eventNames$combination,
     as.character(eventNames$code)
   )
-  
+
   # Create a mapping of comboIds to isCombo values
   comboMap <- rlang::set_names(isCombo$isCombo, as.character(isCombo$comboId))
-  
+
   # Create a mapping of comboIds to numberOfEvents
   eventsMap <- rlang::set_names(isCombo$numberOfEvents, as.character(isCombo$comboId))
-  
+
   # Function to get a descriptive name for a code
   get_name <- function(code) {
-    if (code == "Start") return("Start")
-    
+    if (code == "Start") {
+      return("Start")
+    }
+
     # Check if we have a custom name for this event
     if (code %in% names(codeToName)) {
       name <- codeToName[code]
-      
+
       # Add combo information if available
       if (code %in% names(comboMap) && !is.na(comboMap[code]) && comboMap[code] == 1) {
         if (code %in% names(eventsMap) && !is.na(eventsMap[code])) {
@@ -85,23 +81,22 @@ createPathwaySunburst <- function(
       }
     }
   }
-  
+
   targetNames <- purrr::map_chr(seq_along(
-    pathwaysAnalysisPathsDatas), function(xx) {
-    tId <- purrr::pluck(pathwaysAnalysisPathsDatas[[xx]], "targetCohortId") |> 
+    pathwaysAnalysisPathsDatas
+  ), function(xx) {
+    tId <- purrr::pluck(pathwaysAnalysisPathsDatas[[xx]], "targetCohortId") |>
       unique()
-    generationSet |> 
-      dplyr::filter(.data$cohortId %in% tId) |> 
-      dplyr::pull(.data$cohortName) |> unique()
-  })  
-  
-  
-  
-  
+    generationSet |>
+      dplyr::filter(.data$cohortId %in% tId) |>
+      dplyr::pull(.data$cohortName) |>
+      unique()
+  })
+
   .plots <- lapply(seq_along(pathwaysAnalysisPathsDatas), function(.x) {
     pathwaysAnalysisPathsData <- pathwaysAnalysisPathsDatas[[.x]]
 
-      
+
     # Prepare data for sunburst plot in the format required by sunburstR
     sequences <- dplyr::tibble(
       pathId = integer(),
@@ -110,9 +105,8 @@ createPathwaySunburst <- function(
     )
     # Process each pathway row
     for (i in 1:nrow(pathwaysAnalysisPathsData)) {
-      
       # Start with "root" for each pathway
-      
+
       sequences <- rbind(
         sequences,
         dplyr::tibble(
@@ -130,16 +124,16 @@ createPathwaySunburst <- function(
           name = "Start"
         )
       )
-      
+
       # Add subsequent steps
-      step_count <- 2  # Start from step 2 (after "Start")
+      step_count <- 2 # Start from step 2 (after "Start")
       for (j in 1:nPaths) {
         col_name <- paste0("step", j)
-        if (col_name %in% colnames(pathwaysAnalysisPathsData) && 
-            !is.na(pathwaysAnalysisPathsData[[col_name]][i])) {
+        if (col_name %in% colnames(pathwaysAnalysisPathsData) &&
+          !is.na(pathwaysAnalysisPathsData[[col_name]][i])) {
           code <- as.character(pathwaysAnalysisPathsData[[col_name]][i])
           name <- get_name(code)
-          
+
           sequences <- rbind(
             sequences,
             dplyr::tibble(
@@ -156,19 +150,19 @@ createPathwaySunburst <- function(
       sequence = character(),
       value = numeric()
     )
-    
+
     # Process each pathway
     for (i in unique(sequences$pathId)) {
       # Get steps for this pathway
       path_steps <- sequences[sequences$pathId == i, ]
       path_steps <- path_steps[order(path_steps$step), ]
-      
+
       # Skip root, start with actual steps
       if (nrow(path_steps) > 1) {
         # Create sequence string (skip "root")
         seq_names <- path_steps$name[path_steps$name != "root"]
         sequence <- paste(seq_names, collapse = "-")
-        
+
         # Get count value for this pathway
         count_value <- pathwaysAnalysisPathsData$countValue[i]
         if (!is.na(count_value) && count_value >= minCount) {
@@ -186,7 +180,7 @@ createPathwaySunburst <- function(
     if (nrow(sunburstData) == 0) {
       stop("No pathways meet the minimum count threshold.")
     }
-    
+
     # Aggregate identical sequences
     sunburstData <- sunburstData |>
       dplyr::group_by(.data$sequence) |>
@@ -201,11 +195,12 @@ createPathwaySunburst <- function(
     )
     sunburst <- htmlwidgets::onRender(
       sunburst,
-            "function(el, x) {
+      "function(el, x) {
       // Make legend visible by default
       d3.select(el).select('.sunburst-togglelegend').property('checked', true);
       d3.select(el).select('.sunburst-legend').style('visibility', '');
-    }")
+    }"
+    )
     return(sunburst)
   })
   return(.plots |> rlang::set_names(targetNames))
@@ -215,16 +210,18 @@ createPathwaySunburst <- function(
 
 .prepareEventNames <- function(generationSet, cpResults) {
   event_names <- purrr::pluck(
-    cpResults, 'pathwayAnalysisCodesLong'
-  ) |> dplyr::select(.data$code, cohortId = .data$eventCohortId) |> 
-    dplyr::distinct() |> 
+    cpResults, "pathwayAnalysisCodesLong"
+  ) |>
+    dplyr::select(.data$code, cohortId = .data$eventCohortId) |>
+    dplyr::distinct() |>
     dplyr::inner_join(
-      generationSet |> 
+      generationSet |>
         dplyr::select(.data$cohortId, .data$cohortName),
-      by = dplyr::join_by(cohortId)) |> 
-    dplyr::group_by(.data$code) |> 
+      by = dplyr::join_by(cohortId)
+    ) |>
+    dplyr::group_by(.data$code) |>
     dplyr::reframe(
-      combination = paste(.data$cohortName, collapse = ' & ')
+      combination = paste(.data$cohortName, collapse = " & ")
     )
   return(event_names)
 }
