@@ -23,7 +23,6 @@ Imports:
     SqlRender,
     tidyr
 Suggests:
-    d3r,
     grafify,
     remotes,
     sunburstR,

@@ -19,7 +19,6 @@ createPathwaySunburst <- function(
     minCount = 5) {
   
   rlang::check_installed("sunburstR")
-  rlang::check_installed("d3r")
   rlang::check_installed("htmlwidgets")
   # Input validation
   checkmate::assertList(
@@ -153,7 +152,6 @@ createPathwaySunburst <- function(
         }
       }
     }
-    
     sunburstData <- dplyr::tibble(
       sequence = character(),
       value = numeric()
@@ -199,7 +197,7 @@ createPathwaySunburst <- function(
       data = sunburstData,
       count = TRUE,
       withD3 = TRUE,
-      legend = list(w =380, h =50)
+      legend = list(w = 490, h = 50, r = 100, s = 5)
     )
     sunburst <- htmlwidgets::onRender(
       sunburst,
@@ -222,10 +220,11 @@ createPathwaySunburst <- function(
     dplyr::distinct() |> 
     dplyr::inner_join(
       generationSet |> 
-        dplyr::select(.data$cohortId, .data$cohortName)) |> 
+        dplyr::select(.data$cohortId, .data$cohortName),
+      by = dplyr::join_by(cohortId)) |> 
     dplyr::group_by(.data$code) |> 
     dplyr::reframe(
-      combination = paste(.data$cohortName, collapse = ' and\n')
+      combination = paste(.data$cohortName, collapse = ' & ')
     )
   return(event_names)
 }
