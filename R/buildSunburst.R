@@ -6,12 +6,19 @@
 #'
 #' @param cpResults A list containing the results from CohortPathway analysis.
 #'        Must include 'pathwaysAnalysisPathsData' and 'isCombo' data frames.
-#' @param generationSet A data frame containing information about event cohorts
-#'        that will be used to generate descriptive names for the events in the diagram.
+#' @param generationSet A data frame containing information about cohorts
+#'        that will be used to generate descriptive names for the events in the diagram and target names of the plot
 #' @param nPaths Integer specifying the maximum number of steps to include in the plot.
 #' @param minCount Integer specifying the minimum count value for a path to be included.
 #' @return An HTML widget object containing the interactive sunburst plot.
 #' @export
+#' 
+#' @examples
+#' 
+#' \dontrun{
+#' library(CohortPathway)
+#' sunburstPlot <- CohortPathways::createPathwaySunburst(cpResults, cohortsToCreate)
+#' }
 createPathwaySunburst <- function(
     cpResults,
     generationSet,

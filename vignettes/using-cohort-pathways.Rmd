@@ -1,0 +1,84 @@
+---
+title: "Using Cohort Pathways"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using Cohort Pathways}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+# Set global chunk options for RMarkdown rendering
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+#### Load required libraries
+```{r setup}
+
+# Install 'tidyOhdsiRecipies' package if not already available
+# remotes::install_github('OdyOSG/tidyOhdsiRecipies')
+
+rlang::check_installed("tidyOhdsiRecipies")
+rlang::check_installed("CohortGenerator")
+# Load CohortPathways and connection functionality
+library(CohortPathways)
+
+# Generate connection details to a sample CDM (using the Eunomia demo database)
+connectionDetails <- Eunomia::getEunomiaConnectionDetails()
+```
+
+### Step 1, 2: Define Cohort Definitions, Generate Cohorts
+```{r}
+# grabbed from https://github.com/darwin-eu-dev/TreatmentPatterns
+generationSet <- tidyOhdsiRecipies::createCohortDefinitionSet(
+  path = system.file(package = "CohortPathways", "exampleCohorts")
+)
+
+CohortGenerator::runCohortGeneration(
+  connectionDetails = connectionDetails,
+  cdmDatabaseSchema = 'main',
+  cohortDatabaseSchema = 'main',
+  cohortTableNames = CohortGenerator::getCohortTableNames('cp_cohorts'),
+  cohortDefinitionSet = generationSet,
+  outputFolder = 'tmpor_folder'
+)
+
+```
+
+
+###Step 3: Execute Pathway Analysis
+The executeCohortPathways function identifies the treatment pathways for a target cohort and a set of event cohorts. In this example, we analyze pathways for a target cohort (viral sinusitis) and events cohorts defined in the range 1:6.
+
+```{r}
+
+cpResults <- CohortPathways::executeCohortPathways(
+  connectionDetails = connectionDetails,
+  cohortDatabaseSchema = 'main',
+  cohortTableName = 'cp_cohorts',
+  targetCohortIds = c(7), # viral sinusitis
+  eventCohortIds = c(1:6) # event cohorts
+)
+# Inspect the names of the results
+names(cpResults)
+```
+### Step 4: Visualize Treatment Pathways with a Sunburst Plot
+
+```{r}
+# Create and display a sunburst plot for treatment pathways
+createPathwaySunburst(
+    cpResults,
+    generationSet,
+    nPaths = 3,
+    minCount = 5)
+```
+```{r}
+## move utlt folder 
+unlink('tmpor_folder', recursive = TRUE)
+```
+
+
+
+

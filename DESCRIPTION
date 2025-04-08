@@ -28,7 +28,12 @@ Suggests:
     sunburstR,
     htmlwidgets,
     testthat,
-    withr
+    withr,
+    knitr,
+    rmarkdown,
+    tidyOhdsiRecipies,
+    CohortGenerator,
+    Eunomia
 License: Apache License
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
@@ -36,3 +41,4 @@ Encoding: UTF-8
 Language: en-US
 URL: https://github.com/OHDSI/CohortPathways
 BugReports: https://github.com/OHDSI/CohortPathways/issues
+VignetteBuilder: knitr
