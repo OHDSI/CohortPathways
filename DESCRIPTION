@@ -17,9 +17,12 @@ Depends:
 Imports:
     checkmate,
     dplyr,
+    htmlwidgets,
     lifecycle,
+    purrr,
     rlang,
     SqlRender,
+    sunburstR,
     tidyr
 Suggests:
   remotes,
