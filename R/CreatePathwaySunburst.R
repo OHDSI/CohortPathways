@@ -8,7 +8,7 @@
 #'        Must include 'pathwaysAnalysisPathsData' and 'isCombo' data frames.
 #' @param cohortDefinitionSet A data frame containing information about cohorts
 #'        that will be used to generate descriptive names for the events in the diagram and target names of the plot
-#' @param numberOfPaths Integer specifying the maximum number of steps to include in the plot.
+#' @param numberOfPathsInteger specifying the maximum number of steps to include in the plot.
 #' @param minCount Integer specifying the minimum count value for a path to be included.
 #' @return An HTML widget object containing the interactive sunburst plot.
 #' @export
@@ -17,12 +17,18 @@
 #'
 #' \dontrun{
 #' library(CohortPathway)
-#' sunburstPlot <- CohortPathways::createPathwaySunburst(cohortPathwayResults, cohortsToCreate)
+#' sunburstPlot <- CohortPathways::createPathwaySunburst(cohortPathwayResults, cohortDefinitionSet)
 #' }
 createPathwaySunburst <- function(cohortPathwayResults,
                                   cohortDefinitionSet,
                                   numberOfPaths = 3,
-                                  minCount = 5) {
+                                  minCount = 5,
+                                  plotWidth = "80%",
+                                  plotHeight = 600) {
+  rlang::check_installed("sunburstR")
+  rlang::check_installed("htmlwidgets")
+  rlang::check_installed("d3r")
+  
   # Input validation
   checkmate::assertList(cohortPathwayResults, min.len = 7, types = "data.frame")
   
@@ -36,161 +42,44 @@ createPathwaySunburst <- function(cohortPathwayResults,
   checkmate::assertDataFrame(x = isCombo,
                              min.rows = 1,
                              min.cols = 1)
+  
   # Get event names
-  eventNames <- .prepareEventNames(cohortDefinitionSet, cohortPathwayResults)
+  eventNames <- .splitEvenToPowers(df = isCombo, cohortDefinitionSet = cohortDefinitionSet)
   
-  # Create a mapping of codes to event names
-  codeToName <- rlang::set_names(eventNames$combination, as.character(eventNames$code))
+  # Create final data frame with counts and full path name
+  paths_data <- cohortPathwayResults$pathwaysAnalysisPathsData |>
+    dplyr::select(-c(pathwayAnalysisGenerationId, targetCohortId)) |>
+    dplyr::left_join(eventNames, by = c("step1" = "comboId")) |>
+    dplyr::rename(step1Name = pathName) |>
+    dplyr::left_join(eventNames, by = c("step2" = "comboId")) |>
+    dplyr::rename(step2Name = pathName) |>
+    dplyr::left_join(eventNames, by = c("step3" = "comboId")) |>
+    dplyr::rename(step3Name = pathName) |>
+    dplyr::left_join(eventNames, by = c("step4" = "comboId")) |>
+    dplyr::rename(step4Name = pathName) |>
+    dplyr::select(-c(1:10)) |>
+    dplyr::filter(countValue > minCount)
   
-  # Create a mapping of comboIds to isCombo values
-  comboMap <- rlang::set_names(isCombo$isCombo, as.character(isCombo$comboId))
+  # Convert tabular data to JSON
+  paths_data_json <- d3r::d3_nest(paths_data, value_cols = "countValue")
   
-  # Create a mapping of comboIds to numberOfEvents
-  eventsMap <- rlang::set_names(isCombo$numberOfEvents, as.character(isCombo$comboId))
+  # Create sunburst plot
+  sunburst_plot <- sunburstR::sunburst(
+    data = paths_data_json,
+    width = plotWidth,
+    height = plotHeight,
+    valueField = "countValue",
+    legend = list(
+      w = 490,
+      h = 50,
+      r = 100,
+      s = 5
+    ),
+    count = TRUE
+  )
   
-  # Function to get a descriptive name for a code
-  get_name <- function(code) {
-    if (code == "Start") {
-      return("Start")
-    }
-    
-    # Check if we have a custom name for this event
-    if (code %in% names(codeToName)) {
-      name <- codeToName[code]
-      
-      # Add combo information if available
-      if (code %in% names(comboMap) &&
-          !is.na(comboMap[code]) && comboMap[code] == 1) {
-        if (code %in% names(eventsMap) && !is.na(eventsMap[code])) {
-          name <- paste0(name, " (", eventsMap[code], " events)")
-        }
-      }
-      return(name)
-    } else {
-      # Use default formatting if no custom name is available
-      if (code %in% names(comboMap) &&
-          !is.na(comboMap[code]) && comboMap[code] == 1) {
-        if (code %in% names(eventsMap) && !is.na(eventsMap[code])) {
-          return(paste0("Combo ", code, " (", eventsMap[code], " events)"))
-        } else {
-          return(paste0("Combo ", code))
-        }
-      } else {
-        return(paste0("Event ", code))
-      }
-    }
-  }
-  
-  targetNames <- purrr::map_chr(seq_along(pathwaysAnalysisPathsDatas), function(xx) {
-    tId <- purrr::pluck(pathwaysAnalysisPathsDatas[[xx]], "targetCohortId") |>
-      unique()
-    cohortDefinitionSet |>
-      dplyr::filter(.data$cohortId %in% tId) |>
-      dplyr::pull(.data$cohortName) |>
-      unique()
-  })
-  
-  .plots <- lapply(seq_along(pathwaysAnalysisPathsDatas), function(.x) {
-    pathwaysAnalysisPathsData <- pathwaysAnalysisPathsDatas[[.x]]
-    
-    
-    # Prepare data for sunburst plot in the format required by sunburstR
-    sequences <- dplyr::tibble(pathId = integer(),
-                               step = integer(),
-                               name = character())
-    # Process each pathway row
-    for (i in 1:nrow(pathwaysAnalysisPathsData)) {
-      # Start with "root" for each pathway
-      
-      sequences <- rbind(sequences, dplyr::tibble(
-        pathId = i,
-        step = 0,
-        name = "root"
-      ))
-      # Add "Start" as the first step
-      sequences <- rbind(sequences,
-                         dplyr::tibble(
-                           pathId = i,
-                           step = 1,
-                           name = "Start"
-                         ))
-      
-      # Add subsequent steps
-      step_count <- 2 # Start from step 2 (after "Start")
-      for (j in 1:numberOfPaths) {
-        col_name <- paste0("step", j)
-        if (col_name %in% colnames(pathwaysAnalysisPathsData) &&
-            !is.na(pathwaysAnalysisPathsData[[col_name]][i])) {
-          code <- as.character(pathwaysAnalysisPathsData[[col_name]][i])
-          name <- get_name(code)
-          
-          sequences <- rbind(sequences,
-                             dplyr::tibble(
-                               pathId = i,
-                               step = step_count,
-                               name = name
-                             ))
-          step_count <- step_count + 1
-        }
-      }
-    }
-    sunburstData <- dplyr::tibble(sequence = character(), value = numeric())
-    
-    # Process each pathway
-    for (i in unique(sequences$pathId)) {
-      # Get steps for this pathway
-      path_steps <- sequences[sequences$pathId == i, ]
-      path_steps <- path_steps[order(path_steps$step), ]
-      
-      # Skip root, start with actual steps
-      if (nrow(path_steps) > 1) {
-        # Create sequence string (skip "root")
-        seq_names <- path_steps$name[path_steps$name != "root"]
-        sequence <- paste(seq_names, collapse = "-")
-        
-        # Get count value for this pathway
-        count_value <- pathwaysAnalysisPathsData$countValue[i]
-        if (!is.na(count_value) && count_value >= minCount) {
-          sunburstData <- rbind(sunburstData,
-                                dplyr::tibble(sequence = sequence, value = count_value))
-        }
-      }
-    }
-    # Ensure we have data
-    if (nrow(sunburstData) == 0) {
-      stop("No pathways meet the minimum count threshold.")
-    }
-    
-    # Aggregate identical sequences
-    sunburstData <- sunburstData |>
-      dplyr::group_by(.data$sequence) |>
-      dplyr::summarize(value = sum(.data$value), .groups = "drop")
-    
-    # Create the sunburst plot using sunburstR
-    sunburst <- sunburstR::sunburst(
-      data = sunburstData,
-      count = TRUE,
-      withD3 = TRUE,
-      legend = list(
-        w = 490,
-        h = 50,
-        r = 100,
-        s = 5
-      )
-    )
-    sunburst <- htmlwidgets::onRender(
-      sunburst,
-      "function(el, x) {
-      // Make legend visible by default
-      d3.select(el).select('.sunburst-togglelegend').property('checked', true);
-      d3.select(el).select('.sunburst-legend').style('visibility', '');
-    }"
-    )
-    return(sunburst)
-  })
-  return(.plots |> rlang::set_names(targetNames))
+  return(sunburst_plot)
 }
-
 
 
 .prepareEventNames <- function(cohortDefinitionSet,
@@ -206,4 +95,188 @@ createPathwaySunburst <- function(cohortPathwayResults,
     dplyr::group_by(.data$code) |>
     dplyr::reframe(combination = paste(.data$cohortName, collapse = " & "))
   return(event_names)
+}
+
+
+# Function to split an even number into a chosen number of power-of-two summands.
+.splitEvenToPowers <- function(df, cohortDefinitionSet) {
+  # Set variables
+  comboId <- df$comboId
+  isCombo <- df$isCombo
+  numberOfEvents <- df$numberOfEvents
+  
+  # Create empty data frame
+  data_frame <- data.frame(
+    comboId = integer(),
+    isCombo = integer(),
+    numberOfEvents = integer(),
+    splitNumbers = character()
+  )
+  
+  # Loop through rows of the data frame
+  for (i in 1:nrow(df)) {
+    # If isCombo is 0, simply return the input number without splitting
+    if (isCombo[i] == 0) {
+      # Create data frame
+      data_frame_no_combos <- data.frame(
+        comboId = comboId[i],
+        numberOfEvents = numberOfEvents[i],
+        isCombo = isCombo[i],
+        splitNumbers = as.character(comboId[i])
+      )
+      
+      # Append rows to data frame
+      data_frame <- rbind(data_frame, data_frame_no_combos)
+      
+      
+    } else {
+      # Check if the number is even
+      if (comboId[i] %% 2 != 0) {
+        stop("Please input an even number!")
+      }
+      
+      # Get the binary representation as a vector (least-significant bit first)
+      bits <- as.integer(intToBits(comboId[i]))
+      
+      # Identify positions where the bit is 1 (subtract one for exponent)
+      exponents <- which(bits == 1) - 1
+      
+      # For even numbers, ignore the 2^0 component (which equals 1)
+      exponents <- exponents[exponents != 0]
+      
+      # Compute the corresponding powers of two from the exponents
+      powers <- 2^exponents
+      
+      # Sort the summands in descending order (largest first)
+      current_parts <- sort(powers, decreasing = TRUE)
+      
+      # Define minimal and maximum possible parts for a valid split
+      min_parts <- length(current_parts)
+      max_parts <- comboId[i] / 2  # since the smallest summand allowed is 2
+      
+      if (numberOfEvents[i] < min_parts) {
+        stop(
+          paste(
+            "The minimal splitting has",
+            min_parts,
+            "numberOfEvents. Cannot merge components further."
+          )
+        )
+      }
+      
+      if (numberOfEvents[i] > max_parts) {
+        stop(paste(
+          "The maximal splitting into powers >1 is",
+          max_parts,
+          "numberOfEvents."
+        ))
+      }
+      
+      # Iteratively split the summands until the desired number of parts is reached
+      while (length(current_parts) < numberOfEvents[i]) {
+        # We cannot split further if every summand is 2
+        if (all(current_parts == 2)) {
+          stop("Cannot further split without producing ones.")
+        }
+        
+        # Choose the largest summand that is greater than 2
+        candidates <- current_parts[current_parts > 2]
+        idx <- which(current_parts == max(candidates))[1]
+        value_to_split <- current_parts[idx]
+        
+        # Replace the chosen summand with two equal halves
+        current_parts <- current_parts[-idx]   # Remove the selected summand
+        current_parts <- c(current_parts, value_to_split / 2, value_to_split / 2)
+        
+        # Resort in descending order for consistency.
+        current_parts <- sort(current_parts, decreasing = TRUE)
+      }
+      
+      # Convert the numeric vector to a single string, with elements separated by commas
+      result_string <- paste(current_parts, collapse = ",")
+      
+      # Create data frame
+      data_frame_with_combos <- data.frame(
+        comboId = comboId[i],
+        numberOfEvents = numberOfEvents[i],
+        isCombo = isCombo[i],
+        splitNumbers = result_string
+      )
+      
+      # Append values to data frame
+      data_frame <- rbind(data_frame, data_frame_with_combos)
+      
+    }
+  }
+  
+  # Maximum number of columns to create
+  max_cols <- max(unique(data_frame$numberOfEvents))
+  
+  # Create a vector of column names
+  new_colnames <- paste0("eventCohortCode_", 1:max_cols)
+  
+  # Convert the vector of column names to a data frame
+  df <- setNames(data.frame(matrix(
+    ncol = length(new_colnames), nrow = 0
+  )), new_colnames)
+  
+  # Add NA in all rows (no. of rows is equal to the length of the original data frame)
+  df[nrow(data_frame), ] <- NA
+  
+  # Bind empty data frame columns back to the original data frame
+  data_frame <- cbind(data_frame, df)
+  
+  # Split "splitNumbers" column to multiple columns
+  data_frame <- tidyr::separate(
+    data_frame,
+    col = splitNumbers,
+    into = new_colnames,
+    sep = ",",
+    convert = TRUE,
+    remove = FALSE
+  )
+  
+  # Get event cohort ids of and code (comboId)
+  eventCohortIdAndCode <- cohortPathwaysResults[["pathwayAnalysisCodesLong"]] |>
+    dplyr::filter(isCombo == 0) |>
+    dplyr::select(c(eventCohortId, code))
+  
+  
+  # Join event cohort id to main data frame
+  data_frame <- data_frame |>
+    dplyr::left_join(eventCohortIdAndCode, by = c("eventCohortCode_1" = "code")) |>
+    dplyr::rename(eventCohortId_1 = eventCohortId) |>
+    dplyr::left_join(eventCohortIdAndCode, by = c("eventCohortCode_2" = "code")) |>
+    dplyr::rename(eventCohortId_2 = eventCohortId) |>
+    dplyr::left_join(eventCohortIdAndCode, by = c("eventCohortCode_3" = "code")) |>
+    dplyr::rename(eventCohortId_3 = eventCohortId) |>
+    dplyr::left_join(eventCohortIdAndCode, by = c("eventCohortCode_4" = "code")) |>
+    dplyr::rename(eventCohortId_4 = eventCohortId)
+  
+  cohortDefinitionSet <- cohortDefinitionSet |>
+    dplyr::select(c(cohortId, cohortName))
+  
+  # Join event cohort name to main data frame
+  data_frame <- data_frame |>
+    dplyr::left_join(cohortDefinitionSet, by = c("eventCohortId_1" = "cohortId")) |>
+    dplyr::rename(eventCohortName_1 = cohortName) |>
+    dplyr::left_join(cohortDefinitionSet, by = c("eventCohortId_2" = "cohortId")) |>
+    dplyr::rename(eventCohortName_2 = cohortName) |>
+    dplyr::left_join(cohortDefinitionSet, by = c("eventCohortId_3" = "cohortId")) |>
+    dplyr::rename(eventCohortName_3 = cohortName) |>
+    dplyr::left_join(cohortDefinitionSet, by = c("eventCohortId_4" = "cohortId")) |>
+    dplyr::rename(eventCohortName_4 = cohortName)
+  
+  # Create path name and comboId map
+  data_frame <- data_frame |>
+    tidyr::unite(
+      col = "pathName",
+      eventCohortName_1:eventCohortName_4,
+      sep = " | ",
+      na.rm = TRUE
+    ) |>
+    dplyr::select(c(comboId, pathName))
+  
+  
+  return(data_frame)
 }
